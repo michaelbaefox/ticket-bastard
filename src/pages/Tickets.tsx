@@ -507,13 +507,26 @@ const Tickets = () => {
   const handleSaleConfirm = (priceInSats: number) => {
     if (!saleModal.ticket) return
     
-    // Remove ticket from wallet and add to marketplace
-    setTickets(prev => prev.filter(t => t.id !== saleModal.ticket!.id))
+    // Add to marketplace
+    const newListing = {
+      id: `listing-${Date.now()}`,
+      eventName: saleModal.ticket.eventName,
+      originalPrice: saleModal.ticket.priceInSats,
+      salePrice: priceInSats,
+      seller: saleModal.ticket.outpoint.split(':')[0].slice(0, 12),
+      listingDate: new Date().toISOString(),
+      eventDate: saleModal.ticket.validFrom,
+      venue: saleModal.ticket.seat?.includes('Section') ? 'Various Venues' : 'Unknown Venue',
+      category: 'resale'
+    }
     
-    // Update localStorage  
+    setMarketplace(prev => [...prev, newListing])
+    
+    // Remove ticket from wallet
     const updatedTickets = tickets.filter(t => t.id !== saleModal.ticket!.id)
-    localStorage.setItem('ticketBastardTickets', JSON.stringify(updatedTickets.filter(t => !mockTickets.find(m => m.id === t.id))))
+    setTickets(updatedTickets)
     
+    announce(`Ticket listed for sale at ${priceInSats.toLocaleString()} satoshis`)
     toast({
       title: "Listed for Sale",
       description: `Listed at ${priceInSats.toLocaleString()} sats`

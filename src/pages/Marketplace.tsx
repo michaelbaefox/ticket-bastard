@@ -1,384 +1,264 @@
-import React, { useState, useEffect } from 'react'
-import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check, MessageCircle } from 'lucide-react'
-import { ScanlineOverlay } from '@/components/ScanlineOverlay'
-import { PurchaseModal } from '@/components/PurchaseModal'
-import FeedbackModal from '@/components/FeedbackModal'
-import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useToast } from '@/hooks/use-toast'
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PurchaseModal } from "@/components/PurchaseModal";
+import { FeedbackModal } from "@/components/FeedbackModal";
+import { useToast } from "@/hooks/use-toast";
+import { useMarketplace, useEvents } from "@/hooks/useLocalStorage";
+import { useScreenReader, a11yUtils } from "@/hooks/useAccessibility";
+import { CalendarDays, MapPin, Users, Filter, Search, Zap } from "lucide-react";
 
 // Mock data for listings
 const mockListings = [
   {
-    id: 1,
+    id: "listing-1",
     eventName: "CRYPTO PUNK FESTIVAL 2024",
-    validFrom: "2024-03-15T18:00:00Z",
-    validTo: "2024-03-16T02:00:00Z",
-    sellerOutpoint: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    ticketOutpoint: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
-    priceInSats: 50000,
+    originalPrice: 45000,
+    salePrice: 50000,
+    seller: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+    listingDate: "2024-12-01T10:00:00Z",
+    eventDate: "2024-03-15T18:00:00Z",
+    venue: "Convention Center",
+    category: "music"
   },
   {
-    id: 2,
+    id: "listing-2", 
     eventName: "UNDERGROUND BASS COLLECTIVE",
-    validFrom: "2024-03-20T20:00:00Z",
-    validTo: "2024-03-21T04:00:00Z",
-    sellerOutpoint: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
-    ticketOutpoint: "tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw",
-    priceInSats: 75000,
-  },
-  {
-    id: 3,
-    eventName: "NEO-TOKYO NIGHT MARKET",
-    validFrom: "2024-03-25T19:00:00Z",
-    validTo: "2024-03-26T01:00:00Z",
-    sellerOutpoint: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-    ticketOutpoint: "tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx",
-    priceInSats: 125000,
-  },
-]
+    originalPrice: 75000,
+    salePrice: 65000,
+    seller: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+    listingDate: "2024-12-02T10:00:00Z", 
+    eventDate: "2024-03-20T20:00:00Z",
+    venue: "Underground Club",
+    category: "music"
+  }
+];
 
 const footerMessages = [
   "Ticket authenticity verified.",
-  "BastardChain consensus achieved.",
+  "BastardChain consensus achieved.", 
   "No middlemen detected.",
   "Your transaction is final.",
   "System notice: freedom enabled.",
-]
+];
 
-const truncateAddress = (address: string) => {
-  if (address.length <= 16) return address
-  return `${address.slice(0, 8)}...${address.slice(-8)}`
-}
-
-export default function Marketplace() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState('price-asc')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [isLoading, setIsLoading] = useState(true)
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
+const Marketplace = () => {
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [priceRange, setPriceRange] = useState("all")
+  const [sortBy, setSortBy] = useState("date")
+  const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean, listing: any}>({
+    isOpen: false,
+    listing: null
+  })
+  const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean, listing: any}>({
+    isOpen: false,
+    listing: null
+  })
   const [footerFlash, setFooterFlash] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
-  const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
+  const [marketplace, setMarketplace] = useMarketplace()
+  const [events, setEvents] = useEvents()
   const { toast } = useToast()
-
-  // Simulate loading
+  const { announce } = useScreenReader()
+  
+  // Initialize with mock data if empty
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const handleCopy = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedAddress(text)
-      toast({
-        title: "Copied",
-        description: `${type} copied to clipboard`,
-      })
-      setTimeout(() => setCopiedAddress(null), 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
+    if (marketplace.length === 0) {
+      setMarketplace(mockListings.map(listing => ({
+        id: listing.id,
+        eventName: listing.eventName,
+        originalPrice: listing.originalPrice,
+        salePrice: listing.salePrice,
+        seller: listing.seller,
+        listingDate: listing.listingDate,
+        eventDate: listing.eventDate,
+        venue: listing.venue,
+        category: listing.category
+      })))
     }
-  }
+  }, [marketplace, setMarketplace])
 
-  const handleBuyTicket = (listing: any) => {
+  // Filter and sort listings
+  const filteredListings = marketplace.filter(listing => {
+    if (searchTerm && !listing.eventName.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    if (selectedCategory !== "all" && listing.category !== selectedCategory) {
+      return false;
+    }
+    if (priceRange !== "all") {
+      const price = listing.salePrice;
+      if (priceRange === "low" && price > 50000) return false;
+      if (priceRange === "mid" && (price <= 50000 || price > 100000)) return false;
+      if (priceRange === "high" && price <= 100000) return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    if (sortBy === "price") return a.salePrice - b.salePrice;
+    if (sortBy === "date") return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+    return 0;
+  });
+
+  const handlePurchase = (listing: any) => {
     setPurchaseModal({isOpen: true, listing})
+    announce(`Opening purchase dialog for ${listing.eventName}`)
   }
 
   const handleFeedback = (listing: any) => {
     setFeedbackModal({isOpen: true, listing})
+    announce(`Opening feedback form for ${listing.eventName}`)
   }
 
   const handlePurchaseConfirm = (ticketData: any) => {
-    // Add to localStorage for persistence
+    // Add to tickets localStorage
     const existingTickets = JSON.parse(localStorage.getItem('ticketBastardTickets') || '[]')
     existingTickets.push(ticketData)
     localStorage.setItem('ticketBastardTickets', JSON.stringify(existingTickets))
+    
+    // Remove from marketplace
+    const updatedMarketplace = marketplace.filter(listing => 
+      listing.id !== purchaseModal.listing?.id
+    )
+    setMarketplace(updatedMarketplace)
     
     const msg = footerMessages[Math.floor(Math.random() * footerMessages.length)]
     setFooterFlash(msg)
     setTimeout(() => setFooterFlash(null), 1600)
     
     toast({
-      title: "Purchased",
-      description: `Ticket added to your wallet`,
+      title: "TRANSFER COMPLETE", 
+      description: `Ticket transferred to your wallet • ${ticketData.id.slice(0, 8)}...`
     })
+    
+    announce(`Ticket purchased successfully for ${ticketData.eventName}`)
+    setPurchaseModal({isOpen: false, listing: null})
   }
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Search functionality would go here
-  }
-
-  const filteredListings = mockListings.filter(listing =>
-    listing.eventName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  const sortedListings = [...filteredListings].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-asc':
-        return a.priceInSats - b.priceInSats
-      case 'price-desc':
-        return b.priceInSats - a.priceInSats
-      case 'date-asc':
-        return new Date(a.validFrom).getTime() - new Date(b.validFrom).getTime()
-      case 'date-desc':
-        return new Date(b.validFrom).getTime() - new Date(a.validFrom).getTime()
-      default:
-        return 0
-    }
-  })
 
   return (
-    <div className="min-h-screen">
-      <ScanlineOverlay />
-
-      <div className="max-w-[1280px] mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase mb-6">MARKETPLACE</h1>
-        </div>
-        
-        {/* Toolbar */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            {/* Search */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
-                <Input
-                  type="text"
-                  placeholder="SEARCH EVENTS..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 font-mono uppercase placeholder:text-white/40 bg-transparent border-white/25 focus:border-white focus:ring-white text-white"
-                />
-              </div>
-            </form>
-
-            {/* Controls */}
-            <div className="flex items-center gap-4">
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-40 font-mono text-xs bg-transparent border-white/25 focus:border-white text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-black border-white/25">
-                  <SelectItem value="price-asc" className="font-mono text-xs">PRICE ↑</SelectItem>
-                  <SelectItem value="price-desc" className="font-mono text-xs">PRICE ↓</SelectItem>
-                  <SelectItem value="date-asc" className="font-mono text-xs">DATE ↑</SelectItem>
-                  <SelectItem value="date-desc" className="font-mono text-xs">DATE ↓</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Filter Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                FILTER
-              </Button>
-
-              {/* View Toggle */}
-              <div className="flex border border-white/25 rounded">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={`font-mono text-xs font-bold rounded-none ${
-                    viewMode === 'grid'
-                      ? 'bg-white text-black shadow-[2px_2px_0_0_white]'
-                      : 'bg-transparent text-white hover:bg-white hover:text-black'
-                  }`}
-                >
-                  [ GRID ]
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className={`font-mono text-xs font-bold rounded-none ${
-                    viewMode === 'list'
-                      ? 'bg-white text-black shadow-[2px_2px_0_0_white]'
-                      : 'bg-transparent text-white hover:bg-white hover:text-black'
-                  }`}
-                >
-                  [ LIST ]
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Results Summary */}
-        <div className="mb-6">
-          <p className="text-sm font-mono text-white/60" role="status" aria-live="polite">
-            {isLoading ? 'Loading listings...' : `${sortedListings.length} results`}
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <h1 className="font-mono text-2xl font-bold text-foreground uppercase tracking-wider">
+            TICKET MARKETPLACE
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Buy verified tickets • Support artists on resales
           </p>
         </div>
+      </header>
 
-        {/* Listings */}
-        {isLoading ? (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="bg-transparent border-white/10">
-                <CardContent className="p-4">
-                  <Skeleton className="h-6 w-3/4 mb-4 bg-white/10" />
-                  <Skeleton className="h-4 w-1/2 mb-2 bg-white/10" />
-                  <Skeleton className="h-4 w-2/3 mb-2 bg-white/10" />
-                  <Skeleton className="h-4 w-1/3 mb-4 bg-white/10" />
-                  <Skeleton className="h-10 w-full bg-white/10" />
-                </CardContent>
-              </Card>
-            ))}
+      <section className="max-w-7xl mx-auto px-4 py-6" aria-label="Search and filter options">
+        <div className="flex flex-col lg:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <label htmlFor="event-search" className="sr-only">Search events</label>
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" aria-hidden="true" />
+            <Input
+              id="event-search"
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-input border-border text-foreground"
+            />
           </div>
-        ) : sortedListings.length === 0 ? (
-          <div className="text-center py-16">
-            <Card className="bg-transparent border-white/20 max-w-md mx-auto">
-              <CardContent className="p-8">
-                <p className="text-white/70 mb-4">No listings match your filters.</p>
-                <Button
-                  onClick={() => setSearchQuery('')}
-                  className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white]"
-                >
-                  [ RESET FILTERS ]
-                </Button>
+
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full lg:w-48 bg-input border-border text-foreground" aria-label="Filter by category">
+              <Filter className="w-4 h-4 mr-2" aria-hidden="true" />
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="music">Music</SelectItem>
+              <SelectItem value="sports">Sports</SelectItem>
+              <SelectItem value="conference">Conference</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="main">
+          {filteredListings.map((listing) => (
+            <Card 
+              key={listing.id} 
+              className="bg-card border-border text-card-foreground focus-within:ring-2 focus-within:ring-primary"
+              role="article"
+              aria-labelledby={`listing-title-${listing.id}`}
+            >
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 id={`listing-title-${listing.id}`} className="font-mono font-bold text-lg text-foreground uppercase">
+                      {listing.eventName}
+                    </h3>
+                    <div className="space-y-1">
+                      <div className="flex items-center text-muted-foreground text-sm">
+                        <CalendarDays className="w-4 h-4 mr-1" aria-hidden="true" />
+                        <time dateTime={listing.eventDate}>
+                          {new Date(listing.eventDate).toLocaleDateString()}
+                        </time>
+                      </div>
+                      <div className="flex items-center text-muted-foreground text-sm">
+                        <MapPin className="w-4 h-4 mr-1" aria-hidden="true" />
+                        <span>{listing.venue}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="font-mono">
+                    {listing.category.toUpperCase()}
+                  </Badge>
+                </div>
+
+                <div className="text-right mb-4">
+                  <div className="text-2xl font-bold font-mono text-primary" aria-label={`Price: ${listing.salePrice.toLocaleString()} satoshis`}>
+                    {listing.salePrice.toLocaleString()} sats
+                  </div>
+                </div>
               </CardContent>
+
+              <CardFooter className="p-6 pt-0 flex gap-2">
+                <Button
+                  variant="neo-outline"
+                  size="sm"
+                  onClick={() => handleFeedback(listing)}
+                  className="flex-1"
+                  aria-label={`View seller information for ${listing.eventName}`}
+                >
+                  SELLER INFO
+                </Button>
+                <Button
+                  variant="neo"
+                  size="sm"
+                  onClick={() => handlePurchase(listing)}
+                  className="flex-1"
+                  aria-label={`Purchase ticket for ${listing.eventName}`}
+                >
+                  <Zap className="w-4 h-4 mr-1" aria-hidden="true" />
+                  BUY NOW
+                </Button>
+              </CardFooter>
             </Card>
-          </div>
-        ) : (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-            {sortedListings.map((listing) => (
-              <Card key={listing.id} className="bg-transparent border-white/20 hover:border-white/30 transition-colors">
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-white mb-3">{listing.eventName}</h3>
-                  
-                  <div className="space-y-2 mb-4 text-sm">
-                    <div className="text-white/70">
-                      <span className="font-mono text-xs text-white/50">VALID:</span>{' '}
-                      {new Date(listing.validFrom).toLocaleDateString()} - {new Date(listing.validTo).toLocaleDateString()}
-                    </div>
-                    
-                    <div className="text-white/70">
-                      <span className="font-mono text-xs text-white/50">SELLER:</span>{' '}
-                      <button
-                        onClick={() => handleCopy(listing.sellerOutpoint, 'Seller address')}
-                        className="font-mono hover:text-white transition-colors inline-flex items-center gap-1"
-                        aria-label="Copy seller address"
-                      >
-                        {truncateAddress(listing.sellerOutpoint)}
-                        {copiedAddress === listing.sellerOutpoint ? (
-                          <Check className="w-3 h-3" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </button>
-                    </div>
-                    
-                    <div className="text-white/70">
-                      <span className="font-mono text-xs text-white/50">TICKET:</span>{' '}
-                      <button
-                        onClick={() => handleCopy(listing.ticketOutpoint, 'Ticket outpoint')}
-                        className="font-mono hover:text-white transition-colors inline-flex items-center gap-1"
-                        aria-label="Copy ticket outpoint"
-                      >
-                        {truncateAddress(listing.ticketOutpoint)}
-                        {copiedAddress === listing.ticketOutpoint ? (
-                          <Check className="w-3 h-3" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+          ))}
+        </main>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold text-white">
-                      {listing.priceInSats.toLocaleString()}{' '}
-                      <span className="text-sm font-mono text-white/60">sats</span>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleBuyTicket(listing)}
-                        className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] transition-all"
-                        aria-label={`Buy ticket for ${listing.eventName}`}
-                      >
-                        [ BUY TICKET ]
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleFeedback(listing)}
-                        className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
-                        aria-label={`Leave feedback for ${listing.eventName}`}
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {!isLoading && sortedListings.length > 0 && (
-          <div className="mt-12 flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              PREV
-            </Button>
-            
-            <span className="font-mono text-sm text-white/70 px-4">
-              PAGE {currentPage}
-            </span>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
-            >
-              NEXT
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        )}
-
-        {/* Footer Flash Message */}
         {footerFlash && (
           <div className="mt-8 text-center">
-            <p className="text-xs font-mono text-white/40" role="status" aria-live="polite">
+            <p className="text-xs font-mono text-muted-foreground" role="status" aria-live="polite">
               {footerFlash}
             </p>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Purchase Modal */}
       <PurchaseModal
         isOpen={purchaseModal.isOpen}
         onClose={() => setPurchaseModal({isOpen: false, listing: null})}
         onConfirm={handlePurchaseConfirm}
         eventName={purchaseModal.listing?.eventName || ''}
-        priceInSats={purchaseModal.listing?.priceInSats || 0}
+        priceInSats={purchaseModal.listing?.salePrice || 0}
       />
 
-      {/* Feedback Modal */}
       {feedbackModal.listing && (
         <FeedbackModal
           isOpen={feedbackModal.isOpen}
@@ -388,5 +268,7 @@ export default function Marketplace() {
         />
       )}
     </div>
-  )
-}
+  );
+};
+
+export default Marketplace;
