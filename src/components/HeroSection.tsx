@@ -26,14 +26,14 @@ export default function HeroSection() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Top navigation bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-[1280px] mx-auto px-6 py-4 flex justify-end items-center gap-8 text-sm text-white/70">
-          <Link to="/marketplace" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Marketplace</Link>
-          <Link to="/tickets" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">My Tickets</Link>
-          <Link to="/venue" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Venue</Link>
-          <Link to="/organizer" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Organizer</Link>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
+        <div className="max-w-[1280px] mx-auto px-6 py-4 flex justify-end items-center gap-8 text-sm text-muted-foreground">
+          <Link to="/marketplace" className="hover:text-foreground hover:underline underline-offset-4 transition-colors duration-200">Marketplace</Link>
+          <Link to="/tickets" className="hover:text-foreground hover:underline underline-offset-4 transition-colors duration-200">My Tickets</Link>
+          <Link to="/venue" className="hover:text-foreground hover:underline underline-offset-4 transition-colors duration-200">Venue</Link>
+          <Link to="/organizer" className="hover:text-foreground hover:underline underline-offset-4 transition-colors duration-200">Organizer</Link>
         </div>
       </nav>
 
@@ -60,62 +60,61 @@ export default function HeroSection() {
           {/* Right: info + CTAs */}
           <div className="basis-[58.3333%]">
             <div className="relative">
-              <h1 className="text-[40px] font-extrabold leading-[1.15] tracking-[-0.005em]">
-                F** the system. <span className="text-white/80">Own your tickets.</span>
-              </h1>
-              <p className="mt-4 text-[16px] leading-[26px] text-white/70 max-w-[55ch]">Plain, portable, verifiable. No vendor lock‑in. No middlemen.</p>
+            <h1 className="text-[40px] font-extrabold leading-[1.15] tracking-[-0.005em] text-foreground">
+              F** the system. <span className="text-muted-foreground">Own your tickets.</span>
+            </h1>
+            <p className="mt-4 text-[16px] leading-[26px] text-muted-foreground max-w-[55ch]">Plain, portable, verifiable. No vendor lock‑in. No middlemen.</p>
 
-              <ul className="mt-5 space-y-3 text-sm text-white/90">
-                <li className="flex items-start gap-3">
-                  <span className="mt-[6px] h-2 w-2 rounded-sm" style={{ backgroundColor: '#ff85c5' }} />
-                  <span>On‑chain outputs. No middlemen.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-[6px] h-2 w-2 rounded-sm bg-white/70" />
-                  <span>Encrypted seat. Your privacy.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-[6px] h-2 w-2 rounded-sm bg-white/70" />
-                  <span>Built‑in resale. No scalpers.</span>
-                </li>
-              </ul>
+            <ul className="mt-5 space-y-3 text-sm text-foreground">
+              <li className="flex items-start gap-3">
+                <span className="mt-[6px] h-2 w-2 rounded-sm bg-primary" />
+                <span>On‑chain outputs. No middlemen.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-[6px] h-2 w-2 rounded-sm bg-muted-foreground" />
+                <span>Encrypted seat. Your privacy.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-[6px] h-2 w-2 rounded-sm bg-muted-foreground" />
+                <span>Built‑in resale. No scalpers.</span>
+              </li>
+            </ul>
             </div>
 
-            {/* CTAs */}
-            <div className="mt-7 flex flex-col sm:flex-row gap-4">
-              <Link to="/purchase" className="block">
-                <button
-                  className="w-full sm:w-auto h-[56px] px-12 text-[16px] font-black font-mono tracking-[0.2em] border border-white bg-white text-black hover:bg-black hover:text-white transition-none uppercase shadow-[4px_4px_0_0_white] hover:shadow-[2px_2px_0_0_white] active:translate-x-[2px] active:translate-y-[2px]"
-                  onMouseEnter={handleCtaHover}
-                  aria-label="Get tickets"
-                >
-                  {ctaAlt ? '[  BUY THE LIE  ]' : '[  GET TICKETS  ]'}
-                </button>
-              </Link>
-              <Link to="/marketplace" className="block">
-                <button
-                  className="w-full sm:w-auto h-[56px] px-10 text-[16px] font-bold font-mono tracking-[0.2em] border border-white bg-transparent text-white hover:bg-white hover:text-black transition-none uppercase shadow-[4px_4px_0_0_white] hover:shadow-[2px_2px_0_0_white] active:translate-x-[2px] active:translate-y-[2px]"
-                  onMouseEnter={handleCtaHover}
-                  aria-label="Sell a ticket"
-                >
-                  [  SELL A TICKET  ]
-                </button>
-              </Link>
-            </div>
+          <div className="mt-7 flex flex-col sm:flex-row gap-4">
+            <Link to="/purchase" className="block">
+              <button
+                className="w-full sm:w-auto h-[56px] px-12 text-[16px] font-black font-mono tracking-[0.2em] border border-foreground bg-foreground text-background hover:bg-background hover:text-foreground transition-none uppercase shadow-[4px_4px_0_0_hsl(var(--foreground))] hover:shadow-[2px_2px_0_0_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px]"
+                onMouseEnter={handleCtaHover}
+                aria-label="Get tickets"
+              >
+                {ctaAlt ? '[  BUY THE LIE  ]' : '[  GET TICKETS  ]'}
+              </button>
+            </Link>
+            <Link to="/marketplace" className="block">
+              <button
+                className="w-full sm:w-auto h-[56px] px-10 text-[16px] font-bold font-mono tracking-[0.2em] border border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-none uppercase shadow-[4px_4px_0_0_hsl(var(--foreground))] hover:shadow-[2px_2px_0_0_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px]"
+                onMouseEnter={handleCtaHover}
+                aria-label="Sell a ticket"
+              >
+                [  SELL A TICKET  ]
+              </button>
+            </Link>
+          </div>
 
-            {/* Sub-copy */}
-            <p className="mt-6 text-xs md:text-sm font-mono tracking-[0.02em] text-white/60">"You don't own your tickets. Venues do. Until now."</p>
-            {footerFlash && (
-              <p className="text-xs font-mono text-white/40 mt-2" role="status" aria-live="polite">{footerFlash}</p>
-            )}
+          {/* Sub-copy */}
+          <p className="mt-6 text-xs md:text-sm font-mono tracking-[0.02em] text-muted-foreground">"You don't own your tickets. Venues do. Until now."</p>
+          {footerFlash && (
+            <p className="text-xs font-mono text-muted-foreground/60 mt-2" role="status" aria-live="polite">{footerFlash}</p>
+          )}
           </div>
         </div>
       </section>
 
       {/* Interstitial - Adult Swim style */}
-      <section className="py-8 px-4 text-center border-t border-white/20 pt-12">
-        <p className="text-[11px] font-mono tracking-[0.45em] text-white/60 mb-3">SYSTEM NOTICE</p>
-        <p className="mx-auto max-w-2xl text-sm md:text-base leading-relaxed text-white/70">
+      <section className="py-8 px-4 text-center border-t border-border pt-12">
+        <p className="text-[11px] font-mono tracking-[0.45em] text-muted-foreground mb-3">SYSTEM NOTICE</p>
+        <p className="mx-auto max-w-2xl text-sm md:text-base leading-relaxed text-muted-foreground">
           This website is not a joke. Unless you think it is. Then it's definitely a joke. Either way: you need tickets.
         </p>
       </section>
@@ -123,31 +122,31 @@ export default function HeroSection() {
       {/* Feature Strip */}
       <section className="py-8 px-4">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-4 text-sm text-white/60">
-            <span>Blockchain-native</span>
-            <span className="text-white/30 px-2">•</span>
-            <span>End-to-end encrypted</span>
-            <span className="text-white/30 px-2">•</span>
-            <span>No platform fees</span>
-          </div>
+        <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-4 text-sm text-muted-foreground">
+          <span>Blockchain-native</span>
+          <span className="text-muted-foreground/30 px-2">•</span>
+          <span>End-to-end encrypted</span>
+          <span className="text-muted-foreground/30 px-2">•</span>
+          <span>No platform fees</span>
+        </div>
         </div>
       </section>
 
       {/* Scroll hint */}
       <div className="py-8 flex justify-center">
-        <ArrowDown className="w-12 h-12 text-white/80 animate-bounce hover:scale-110 cursor-pointer transition-transform" />
+        <ArrowDown className="w-12 h-12 text-foreground/80 animate-bounce hover:scale-110 cursor-pointer transition-transform" />
       </div>
 
       {/* How it works */}
       <section className="py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl font-bold">How it works</h2>
-          <p className="mt-6 font-mono tracking-widest text-sm text-white/80">BUY → HOLD → SCAN → REDEEM → RESELL</p>
+          <h2 className="text-2xl font-bold text-foreground">How it works</h2>
+          <p className="mt-6 font-mono tracking-widest text-sm text-foreground/80">BUY → HOLD → SCAN → REDEEM → RESELL</p>
 
           {/* Final CTA */}
           <div className="mt-12 inline-block">
             <Link to="/marketplace">
-              <button className="px-10 py-4 text-base font-bold font-mono tracking-widest border border-white bg-transparent text-white hover:bg-white hover:text-black transition-colors">
+              <button className="px-10 py-4 text-base font-bold font-mono tracking-widest border border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-colors">
                 Browse Marketplace
               </button>
             </Link>
