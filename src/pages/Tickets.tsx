@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { QrCode, Send, DollarSign, Copy, Download, Share, X } from 'lucide-react'
+import { QrCode, Send, DollarSign, Copy, Download, Share, X, MessageCircle, RefreshCw } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Link } from 'react-router-dom'
 import { ScanlineOverlay } from '@/components/ScanlineOverlay'
 import { TransferModal } from '@/components/TransferModal'
 import { ListForSaleModal } from '@/components/ListForSaleModal'
+import FeedbackModal from '@/components/FeedbackModal'
+import RefundModal from '@/components/RefundModal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -250,7 +252,9 @@ const TicketCard: React.FC<{
   onCopyOutpoint: () => void
   onTransfer: () => void
   onListForSale: () => void
-}> = ({ ticket, onViewQR, onRedeem, onCopyOutpoint, onTransfer, onListForSale }) => {
+  onFeedback: () => void
+  onRefund: () => void
+}> = ({ ticket, onViewQR, onRedeem, onCopyOutpoint, onTransfer, onListForSale, onFeedback, onRefund }) => {
   const isActive = ticket.status === "VALID"
   const isRedeemed = ticket.status === "REDEEMED"
 
@@ -338,7 +342,33 @@ const TicketCard: React.FC<{
             >
               <DollarSign className="w-4 h-4" />
             </button>
+            
+            <button
+              onClick={onFeedback}
+              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              aria-label="Leave feedback"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={onRefund}
+              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              aria-label="Request refund"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </>
+        )}
+
+        {isRedeemed && (
+          <button
+            onClick={onFeedback}
+            className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+            aria-label="Leave feedback"
+          >
+            <MessageCircle className="w-4 h-4" />
+          </button>
         )}
       </div>
     </div>
@@ -377,6 +407,14 @@ const Tickets = () => {
     ticket: null
   })
   const [saleModal, setSaleModal] = useState<{isOpen: boolean; ticket: Ticket | null}>({
+    isOpen: false,
+    ticket: null
+  })
+  const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; ticket: Ticket | null}>({
+    isOpen: false,
+    ticket: null
+  })
+  const [refundModal, setRefundModal] = useState<{isOpen: boolean; ticket: Ticket | null}>({
     isOpen: false,
     ticket: null
   })
@@ -440,6 +478,14 @@ const Tickets = () => {
 
   const handleListForSale = (ticket: Ticket) => {
     setSaleModal({ isOpen: true, ticket })
+  }
+
+  const handleFeedback = (ticket: Ticket) => {
+    setFeedbackModal({ isOpen: true, ticket })
+  }
+
+  const handleRefund = (ticket: Ticket) => {
+    setRefundModal({ isOpen: true, ticket })
   }
 
   const handleTransferConfirm = (recipientAddress: string) => {
@@ -540,6 +586,8 @@ const Tickets = () => {
                       onCopyOutpoint={() => handleCopyOutpoint(ticket)}
                       onTransfer={() => handleTransfer(ticket)}
                       onListForSale={() => handleListForSale(ticket)}
+                      onFeedback={() => handleFeedback(ticket)}
+                      onRefund={() => handleRefund(ticket)}
                     />
                   ))}
                 </div>
@@ -560,6 +608,8 @@ const Tickets = () => {
                       onCopyOutpoint={() => handleCopyOutpoint(ticket)}
                       onTransfer={() => handleTransfer(ticket)}
                       onListForSale={() => handleListForSale(ticket)}
+                      onFeedback={() => handleFeedback(ticket)}
+                      onRefund={() => handleRefund(ticket)}
                     />
                   ))}
                 </div>
@@ -590,6 +640,27 @@ const Tickets = () => {
         eventName={saleModal.ticket?.eventName || ''}
         originalPrice={saleModal.ticket?.priceInSats || 0}
       />
+
+      {/* Feedback Modal */}
+      {feedbackModal.ticket && (
+        <FeedbackModal
+          isOpen={feedbackModal.isOpen}
+          onClose={() => setFeedbackModal({isOpen: false, ticket: null})}
+          eventName={feedbackModal.ticket.eventName}
+          eventId={feedbackModal.ticket.id}
+        />
+      )}
+
+      {/* Refund Modal */}
+      {refundModal.ticket && (
+        <RefundModal
+          isOpen={refundModal.isOpen}
+          onClose={() => setRefundModal({isOpen: false, ticket: null})}
+          ticketId={refundModal.ticket.id}
+          eventName={refundModal.ticket.eventName}
+          priceSats={refundModal.ticket.priceInSats || 0}
+        />
+      )}
     </div>
   )
 }

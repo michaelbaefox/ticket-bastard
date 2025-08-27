@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react'
+import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check, MessageCircle } from 'lucide-react'
 import { ScanlineOverlay } from '@/components/ScanlineOverlay'
 import { PurchaseModal } from '@/components/PurchaseModal'
+import FeedbackModal from '@/components/FeedbackModal'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,6 +64,7 @@ export default function Marketplace() {
   const [footerFlash, setFooterFlash] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
+  const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
   const { toast } = useToast()
 
   // Simulate loading
@@ -87,6 +89,10 @@ export default function Marketplace() {
 
   const handleBuyTicket = (listing: any) => {
     setPurchaseModal({isOpen: true, listing})
+  }
+
+  const handleFeedback = (listing: any) => {
+    setFeedbackModal({isOpen: true, listing})
   }
 
   const handlePurchaseConfirm = (ticketData: any) => {
@@ -300,13 +306,24 @@ export default function Marketplace() {
                       <span className="text-sm font-mono text-white/60">sats</span>
                     </div>
                     
-                    <Button
-                      onClick={() => handleBuyTicket(listing)}
-                      className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] transition-all"
-                      aria-label={`Buy ticket for ${listing.eventName}`}
-                    >
-                      [ BUY TICKET ]
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleBuyTicket(listing)}
+                        className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                        aria-label={`Buy ticket for ${listing.eventName}`}
+                      >
+                        [ BUY TICKET ]
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleFeedback(listing)}
+                        className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
+                        aria-label={`Leave feedback for ${listing.eventName}`}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -360,6 +377,16 @@ export default function Marketplace() {
         eventName={purchaseModal.listing?.eventName || ''}
         priceInSats={purchaseModal.listing?.priceInSats || 0}
       />
+
+      {/* Feedback Modal */}
+      {feedbackModal.listing && (
+        <FeedbackModal
+          isOpen={feedbackModal.isOpen}
+          onClose={() => setFeedbackModal({isOpen: false, listing: null})}
+          eventName={feedbackModal.listing.eventName}
+          eventId={feedbackModal.listing.id?.toString() || ''}
+        />
+      )}
     </div>
   )
 }
