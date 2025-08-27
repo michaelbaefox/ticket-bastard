@@ -9,9 +9,7 @@ export default function App({ children }: { children: React.ReactNode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   const isHome = pathname === '/'
-  const isMarketplace = pathname === '/marketplace'
-  const hideHeaderRoutes = ['/marketplace', '/tickets', '/venue', '/organizer']
-  const shouldHideHeader = hideHeaderRoutes.includes(pathname)
+  const shouldHideHeader = false // Always show header except on home page
 
   const navItems = [
     { path: '/marketplace', label: 'Marketplace', icon: ShoppingCart },
@@ -52,7 +50,7 @@ export default function App({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-text-primary flex flex-col">
-      {!isHome && !shouldHideHeader && (
+      {!isHome && (
         <header className="sticky top-0 z-50 bg-surface-dark border-b border-border py-4">
           <div className="mx-auto px-4 max-w-[1000px]">
             <div className="flex justify-between items-center gap-4">
@@ -103,7 +101,7 @@ export default function App({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Mobile Menu */}
-      {!isHome && !shouldHideHeader && isMenuOpen && (
+      {!isHome && isMenuOpen && (
         <div className={`fixed inset-0 z-40 bg-surface-dark md:hidden`}>
           <nav className="flex flex-col items-start p-8 mt-16 space-y-2">
             {navItems.map((item) => {
@@ -133,10 +131,10 @@ export default function App({ children }: { children: React.ReactNode }) {
       )}
 
       <main className="relative flex-grow">
-        {shouldHideHeader ? (
+        {isHome ? (
           <div className="animate-fade-in">{children}</div>
         ) : (
-          <div className={`mx-auto px-4 py-10 ${isHome ? 'max-w-[1280px]' : 'max-w-[1000px]'}`}>
+          <div className="mx-auto px-4 py-10 max-w-[1000px]">
             <div className="animate-fade-in">{children}</div>
           </div>
         )}
