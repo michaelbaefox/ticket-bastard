@@ -2,9 +2,10 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import QrScanner from 'qr-scanner';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { Zap, FlipHorizontal, Edit3, Copy } from 'lucide-react';
+import { Zap, FlipHorizontal, Edit3, Copy, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ScanlineOverlay } from '@/components/ScanlineOverlay';
 
 type ScanState = "VALID" | "ALREADY_USED" | "INVALID" | "ERROR";
 type ScanResult = { 
@@ -267,6 +268,7 @@ const Venue = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <ScanlineOverlay />
       {/* Scanner Stage */}
       <div className="relative flex flex-col items-center justify-center min-h-screen p-4">
         {/* Scanner Container */}

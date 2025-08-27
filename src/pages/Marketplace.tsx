@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react'
+import { ScanlineOverlay } from '@/components/ScanlineOverlay'
+import { PurchaseModal } from '@/components/PurchaseModal'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -60,6 +62,7 @@ export default function Marketplace() {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
   const [footerFlash, setFooterFlash] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
   const { toast } = useToast()
 
   // Simulate loading
@@ -82,15 +85,23 @@ export default function Marketplace() {
     }
   }
 
-  const handleBuyTicket = () => {
+  const handleBuyTicket = (listing: any) => {
+    setPurchaseModal({isOpen: true, listing})
+  }
+
+  const handlePurchaseConfirm = (ticketData: any) => {
+    // Add to localStorage for persistence
+    const existingTickets = JSON.parse(localStorage.getItem('ticketBastardTickets') || '[]')
+    existingTickets.push(ticketData)
+    localStorage.setItem('ticketBastardTickets', JSON.stringify(existingTickets))
+    
     const msg = footerMessages[Math.floor(Math.random() * footerMessages.length)]
     setFooterFlash(msg)
     setTimeout(() => setFooterFlash(null), 1600)
     
-    const ref = Math.random().toString(36).substring(2, 8).toUpperCase()
     toast({
       title: "Purchased",
-      description: `ref ${ref}`,
+      description: `Ticket added to your wallet`,
     })
   }
 
@@ -120,10 +131,7 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen">
-      {/* Subtle scanline overlay */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute inset-0 opacity-[0.03] mix-blend-screen bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.08)_0px,rgba(255,255,255,.08)_1px,transparent_1px,transparent_3px)]" />
-      </div>
+      <ScanlineOverlay />
 
       <div className="max-w-[1280px] mx-auto px-4 py-8">
         {/* Page Header */}
@@ -293,7 +301,7 @@ export default function Marketplace() {
                     </div>
                     
                     <Button
-                      onClick={handleBuyTicket}
+                      onClick={() => handleBuyTicket(listing)}
                       className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] transition-all"
                       aria-label={`Buy ticket for ${listing.eventName}`}
                     >
@@ -343,6 +351,15 @@ export default function Marketplace() {
           </div>
         )}
       </div>
+
+      {/* Purchase Modal */}
+      <PurchaseModal
+        isOpen={purchaseModal.isOpen}
+        onClose={() => setPurchaseModal({isOpen: false, listing: null})}
+        onConfirm={handlePurchaseConfirm}
+        eventName={purchaseModal.listing?.eventName || ''}
+        priceInSats={purchaseModal.listing?.priceInSats || 0}
+      />
     </div>
   )
 }

@@ -134,7 +134,7 @@ export default function App({ children }: { children: React.ReactNode }) {
         {isHome ? (
           <div className="animate-fade-in">{children}</div>
         ) : (
-          <div className="mx-auto px-4 py-10 max-w-[1000px]">
+          <div className="mx-auto px-4 py-10 max-w-[1280px]">
             <div className="animate-fade-in">{children}</div>
           </div>
         )}

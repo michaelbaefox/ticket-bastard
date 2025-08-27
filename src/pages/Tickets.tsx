@@ -1,6 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { QrCode, Send, DollarSign, Copy, Download, Share, X } from 'lucide-react'
+import QRCode from 'qrcode'
 import { Link } from 'react-router-dom'
-import { Copy, QrCode, ArrowRight, X } from 'lucide-react'
+import { ScanlineOverlay } from '@/components/ScanlineOverlay'
+import { TransferModal } from '@/components/TransferModal'
+import { ListForSaleModal } from '@/components/ListForSaleModal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,139 +14,201 @@ interface Ticket {
   id: string
   eventName: string
   seat: string
-  validFrom: Date
-  validTo: Date
+  validFrom: string
+  validTo: string
   outpoint: string
-  status: 'valid' | 'expired' | 'redeemed' | 'not-yet-valid'
-  qrCode?: string
+  status: 'VALID' | 'EXPIRED' | 'REDEEMED' | 'NOT_YET_VALID'
+  priceInSats?: number
 }
 
-// Mock data for demo
+// Mock data for demonstration
 const mockTickets: Ticket[] = [
   {
-    id: '1',
-    eventName: 'SYSTEM OVERLOAD // BROOKLYN STEEL',
-    seat: 'Section A, Row 12, Seat 15',
-    validFrom: new Date('2024-08-26T18:00:00'),
-    validTo: new Date('2024-08-27T01:00:00'),
-    outpoint: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-    status: 'valid',
-    qrCode: 'QR_CODE_DATA_HERE'
+    id: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+    eventName: "CRYPTO PUNK FESTIVAL 2024",
+    seat: "Section 1, Row A",
+    validFrom: "2024-03-15T18:00:00Z",
+    validTo: "2024-03-16T02:00:00Z",
+    outpoint: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx:0",
+    status: "VALID" as const,
+    priceInSats: 50000,
   },
   {
-    id: '2', 
-    eventName: 'RESISTANCE PARTY // WAREHOUSE NYC',
-    seat: 'Encrypted',
-    validFrom: new Date('2024-09-15T20:00:00'),
-    validTo: new Date('2024-09-16T03:00:00'),
-    outpoint: 'z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4',
-    status: 'not-yet-valid',
-    qrCode: 'QR_CODE_DATA_HERE_2'
+    id: "tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw",
+    eventName: "UNDERGROUND BASS COLLECTIVE",
+    seat: "General Admission",
+    validFrom: "2024-03-20T20:00:00Z",
+    validTo: "2024-03-21T04:00:00Z",
+    outpoint: "tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw:0",
+    status: "VALID" as const,
+    priceInSats: 75000,
   },
   {
-    id: '3',
-    eventName: 'DIGITAL DYSTOPIA // OUTPUT BK',
-    seat: 'VIP Section, Table 7',
-    validFrom: new Date('2024-07-20T19:00:00'),
-    validTo: new Date('2024-07-21T02:00:00'),
-    outpoint: 'b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a1',
-    status: 'redeemed',
-    qrCode: 'QR_CODE_DATA_HERE_3'
-  }
+    id: "tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx",
+    eventName: "NEO-TOKYO NIGHT MARKET",
+    seat: "Section 2, Row C",
+    validFrom: "2024-01-25T19:00:00Z",
+    validTo: "2024-01-26T01:00:00Z",
+    outpoint: "tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx:0",
+    status: "REDEEMED" as const,
+    priceInSats: 125000,
+  },
 ]
 
-const QRModal: React.FC<{ 
-  ticket: Ticket | null
-  isOpen: boolean
-  onClose: () => void
-}> = ({ ticket, isOpen, onClose }) => {
-  const { toast } = useToast()
-  
-  if (!isOpen || !ticket) return null
+// QR Modal for displaying ticket QR code
+const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ ticket, onClose }) => {
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const generateQRCode = async () => {
+      if (!ticket) return
+      
+      try {
+        // Generate QR code from ticket outpoint
+        const qrUrl = await QRCode.toDataURL(ticket.outpoint, {
+          width: 512,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        })
+        setQrCodeUrl(qrUrl)
+      } catch (error) {
+        console.error('QR code generation failed:', error)
+      }
+    }
+
+    generateQRCode()
+  }, [ticket])
 
   const handleDownload = () => {
-    toast({
-      title: "Download initiated",
-      description: "QR code saved to downloads"
-    })
+    if (qrCodeUrl) {
+      const link = document.createElement('a')
+      link.download = `ticket-${ticket?.id}.png`
+      link.href = qrCodeUrl
+      link.click()
+    }
   }
 
-  const handleShare = () => {
-    navigator.share?.({
-      title: ticket.eventName,
-      text: `My ticket: ${ticket.eventName}`,
-    }).catch(() => {
-      toast({
-        title: "Share failed", 
-        description: "Could not share ticket"
-      })
-    })
+  const handleShare = async () => {
+    if (navigator.share && qrCodeUrl) {
+      try {
+        // Convert data URL to blob
+        const response = await fetch(qrCodeUrl)
+        const blob = await response.blob()
+        const file = new File([blob], `ticket-${ticket?.id}.png`, { type: 'image/png' })
+        
+        await navigator.share({
+          title: `Ticket: ${ticket?.eventName}`,
+          files: [file]
+        })
+      } catch (error) {
+        console.error('Share failed:', error)
+      }
+    }
   }
 
-  React.useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
+    if (!isFullscreen && 'wakeLock' in navigator) {
+      // Request wake lock to keep screen on during presentation
+      (navigator as any).wakeLock?.request?.('screen')
     }
-    
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
+  }
 
-  React.useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    
-    document.addEventListener('keydown', handleEsc)
-    return () => document.removeEventListener('keydown', handleEsc)
-  }, [onClose])
+  if (!ticket) return null
+
+  // Fullscreen presentation mode
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+        <button
+          onClick={toggleFullscreen}
+          className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 p-2"
+          aria-label="Exit fullscreen"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        
+        <div className="flex flex-col items-center justify-center p-8 max-w-md w-full">
+          <div className="bg-white p-8 rounded-lg mb-6 shadow-2xl">
+            {qrCodeUrl && (
+              <img 
+                src={qrCodeUrl} 
+                alt="Ticket QR Code"
+                className="w-full h-auto max-w-sm"
+              />
+            )}
+          </div>
+          <div className="text-center text-white">
+            <h2 className="font-bold text-xl mb-2">{ticket.eventName}</h2>
+            <p className="text-white/70">{ticket.seat}</p>
+            <p className="text-white/60 text-sm font-mono mt-2">
+              Present to scanner at venue
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-8 relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 right-4 text-black hover:bg-black/10"
-          onClick={onClose}
-          aria-label="Close QR code"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-black border-2 border-white/20 rounded-lg max-w-md w-full p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-white font-mono uppercase">Ticket QR</h2>
+          <button onClick={onClose} className="text-white hover:text-gray-300" aria-label="Close modal">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
         
-        <div className="text-center">
-          <div className="w-64 h-64 mx-auto bg-white border-4 border-black flex items-center justify-center mb-6">
-            <QrCode className="h-48 w-48 text-black" />
+        <div className="space-y-4">
+          <div className="text-center">
+            <h3 className="font-bold text-white mb-1">{ticket.eventName}</h3>
+            <p className="text-white/70 text-sm">{ticket.seat}</p>
           </div>
           
-          <p className="font-mono text-sm text-black/70 mb-4 break-all">
-            {ticket.outpoint}
-          </p>
-          
-          <div className="flex gap-2 justify-center mb-4">
-            <StatusBadge status={ticket.status} />
+          <div className="bg-white p-4 rounded-lg">
+            {qrCodeUrl ? (
+              <img 
+                src={qrCodeUrl} 
+                alt="Ticket QR Code"
+                className="w-full h-auto"
+              />
+            ) : (
+              <div className="aspect-square bg-gray-200 animate-pulse rounded" />
+            )}
           </div>
           
-          <div className="flex gap-2 justify-center">
-            <Button
-              variant="outline"
-              size="sm"
+          <div className="text-center text-xs text-white/60 font-mono">
+            ID: {ticket.id}
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={toggleFullscreen}
+              className="flex-1 bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-4 font-mono text-xs font-bold transition-colors"
+            >
+              [ PRESENT ]
+            </button>
+            <button
               onClick={handleDownload}
-              className="text-black border-black hover:bg-black hover:text-white"
+              className="flex-1 bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-4 font-mono text-xs font-bold transition-colors"
             >
-              Download
-            </Button>
-            <Button
-              variant="outline" 
-              size="sm"
-              onClick={handleShare}
-              className="text-black border-black hover:bg-black hover:text-white"
-            >
-              Share
-            </Button>
+              <Download className="w-4 h-4 mr-1" />
+              SAVE
+            </button>
+            {navigator.share && (
+              <button
+                onClick={handleShare}
+                className="flex-1 bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-4 font-mono text-xs font-bold transition-colors"
+              >
+                <Share className="w-4 h-4 mr-1" />
+                SHARE
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -150,17 +216,18 @@ const QRModal: React.FC<{
   )
 }
 
+// Status Badge Component  
 const StatusBadge: React.FC<{ status: Ticket['status'] }> = ({ status }) => {
   const getStatusConfig = () => {
     switch (status) {
-      case 'valid':
-        return { text: 'VALID', className: 'bg-green-600 text-white' }
-      case 'expired':
-        return { text: 'EXPIRED', className: 'bg-red-600 text-white' }
-      case 'redeemed':
-        return { text: 'REDEEMED', className: 'bg-amber-600 text-white' }
-      case 'not-yet-valid':
-        return { text: 'NOT YET VALID', className: 'bg-amber-600 text-white' }
+      case 'VALID':
+        return { text: 'VALID', className: 'bg-green-500 text-black' }
+      case 'EXPIRED':
+        return { text: 'EXPIRED', className: 'bg-red-500 text-white' }
+      case 'REDEEMED':
+        return { text: 'REDEEMED', className: 'bg-amber-500 text-black' }
+      case 'NOT_YET_VALID':
+        return { text: 'NOT YET VALID', className: 'bg-amber-500 text-black' }
       default:
         return { text: 'UNKNOWN', className: 'bg-muted text-muted-foreground' }
     }
@@ -169,113 +236,118 @@ const StatusBadge: React.FC<{ status: Ticket['status'] }> = ({ status }) => {
   const config = getStatusConfig()
   
   return (
-    <Badge variant="secondary" className={`text-xs font-mono uppercase ${config.className}`}>
+    <Badge className={`text-xs font-mono uppercase px-2 py-1 ${config.className}`}>
       {config.text}
     </Badge>
   )
 }
 
-const TicketCard: React.FC<{ 
+// Ticket Card Component with enhanced functionality
+const TicketCard: React.FC<{
   ticket: Ticket
   onViewQR: () => void
   onRedeem: () => void
   onCopyOutpoint: () => void
-}> = ({ ticket, onViewQR, onRedeem, onCopyOutpoint }) => {
-  const formatValidityWindow = (from: Date, to: Date) => {
-    const fromStr = from.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-    const toStr = to.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-    return `Valid ${fromStr} → ${toStr}`
-  }
+  onTransfer: () => void
+  onListForSale: () => void
+}> = ({ ticket, onViewQR, onRedeem, onCopyOutpoint, onTransfer, onListForSale }) => {
+  const isActive = ticket.status === "VALID"
+  const isRedeemed = ticket.status === "REDEEMED"
 
-  const truncateOutpoint = (outpoint: string) => {
-    if (outpoint.length <= 16) return outpoint
-    return `${outpoint.slice(0, 8)}...${outpoint.slice(-8)}`
+  const formatValidityWindow = () => {
+    const startDate = new Date(ticket.validFrom)
+    const endDate = new Date(ticket.validTo)
+    
+    if (startDate.toDateString() === endDate.toDateString()) {
+      return `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    }
+    
+    return `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleDateString()} ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   }
-
-  const isActive = ticket.status === 'valid'
-  const isRedeemed = ticket.status === 'redeemed'
 
   return (
-    <div className={`border border-white/20 rounded-md p-4 transition-all hover:border-white/40 ${!isActive && !isRedeemed ? 'opacity-50' : ''}`}>
-      <div className="flex flex-col gap-3">
-        <div className="flex justify-between items-start">
-          <h3 className="font-bold text-lg">{ticket.eventName}</h3>
-          <StatusBadge status={ticket.status} />
+    <div className={`border-2 rounded-lg p-4 transition-all ${
+      isActive 
+        ? 'border-green-500/30 bg-green-500/5 shadow-[0_0_20px_rgba(34,197,94,0.1)]' 
+        : 'border-white/20 bg-white/5'
+    }`}>
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <h3 className="font-bold text-white mb-1">{ticket.eventName}</h3>
+          <p className="text-white/70 text-sm">{ticket.seat}</p>
+        </div>
+        <StatusBadge status={ticket.status} />
+      </div>
+      
+      <div className="space-y-2 mb-4 text-sm">
+        <div className="text-white/70">
+          <span className="font-mono text-xs text-white/50">VALID:</span>{' '}
+          {formatValidityWindow()}
         </div>
         
-        <div className="text-sm text-white/70 space-y-1">
-          <p><span className="text-white/90">Seat:</span> {ticket.seat}</p>
-          <p><span className="text-white/90">Valid:</span> {formatValidityWindow(ticket.validFrom, ticket.validTo)}</p>
-          <p className="flex items-center gap-2">
-            <span className="text-white/90">Outpoint:</span> 
-            <code className="font-mono text-xs bg-white/10 px-2 py-1 rounded">
-              {truncateOutpoint(ticket.outpoint)}
-            </code>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCopyOutpoint}
-              className="h-6 w-6 p-0 text-white/50 hover:text-white"
-              aria-label="Copy outpoint"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </p>
+        <div className="text-white/70">
+          <span className="font-mono text-xs text-white/50">OUTPOINT:</span>{' '}
+          <button
+            onClick={onCopyOutpoint}
+            className="font-mono hover:text-white transition-colors inline-flex items-center gap-1"
+            aria-label="Copy outpoint"
+          >
+            {ticket.outpoint}
+            <Copy className="w-3 h-3" />
+          </button>
         </div>
-
-        {!isRedeemed && (
-          <div className="flex gap-2 mt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onViewQR}
-              className="border border-white/20 hover:border-white hover:bg-white hover:text-black"
-            >
-              VIEW QR
-            </Button>
-            {isActive && (
-              <Button
-                variant="neo"
-                size="sm"
-                onClick={onRedeem}
-                className="font-mono text-xs tracking-wider"
-              >
-                [ REDEEM ]
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="border border-white/20 hover:border-white hover:bg-white hover:text-black"
-            >
-              TRANSFER
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="border border-white/20 hover:border-white hover:bg-white hover:text-black"
-            >
-              LIST FOR SALE
-            </Button>
+        
+        {ticket.priceInSats && (
+          <div className="text-white/70">
+            <span className="font-mono text-xs text-white/50">PAID:</span>{' '}
+            <span className="font-mono">{ticket.priceInSats.toLocaleString()} sats</span>
           </div>
+        )}
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={onViewQR}
+          className="flex-1 min-w-[100px] bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-3 font-mono text-xs font-bold transition-all shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px]"
+        >
+          <QrCode className="w-4 h-4 mr-1" />
+          QR
+        </button>
+        
+        {isActive && (
+          <>
+            <button
+              onClick={onRedeem}
+              className="flex-1 min-w-[100px] bg-green-500 text-black hover:bg-black hover:text-green-500 border-2 border-green-500 py-2 px-3 font-mono text-xs font-bold transition-all"
+            >
+              REDEEM
+            </button>
+            
+            <button
+              onClick={onTransfer}
+              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              aria-label="Transfer ticket"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={onListForSale}
+              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              aria-label="List for sale"
+            >
+              <DollarSign className="w-4 h-4" />
+            </button>
+          </>
         )}
       </div>
     </div>
   )
 }
 
+// Loading skeleton component
 const TicketSkeleton: React.FC = () => (
-  <div className="border border-white/10 rounded-md p-4">
+  <div className="border border-white/10 rounded-lg p-4">
     <div className="space-y-3">
       <div className="flex justify-between items-start">
         <Skeleton className="h-6 w-48 bg-white/10" />
@@ -295,125 +367,228 @@ const TicketSkeleton: React.FC = () => (
   </div>
 )
 
-const Tickets: React.FC = () => {
-  const [tickets] = useState<Ticket[]>(mockTickets)
-  const [loading] = useState(false)
+// Main Tickets Page Component
+const Tickets = () => {
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
-  const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [transferModal, setTransferModal] = useState<{isOpen: boolean; ticket: Ticket | null}>({
+    isOpen: false,
+    ticket: null
+  })
+  const [saleModal, setSaleModal] = useState<{isOpen: boolean; ticket: Ticket | null}>({
+    isOpen: false,
+    ticket: null
+  })
   const { toast } = useToast()
 
-  const activeTickets = tickets.filter(t => t.status === 'valid' || t.status === 'not-yet-valid' || t.status === 'expired')
-  const redeemedTickets = tickets.filter(t => t.status === 'redeemed')
+  useEffect(() => {
+    // Load tickets from localStorage and mock data
+    const loadTickets = () => {
+      const storedTickets = JSON.parse(localStorage.getItem('ticketBastardTickets') || '[]')
+      const combinedTickets = [...mockTickets, ...storedTickets]
+      setTickets(combinedTickets)
+      setIsLoading(false)
+    }
+
+    // Simulate loading
+    const timer = setTimeout(loadTickets, 1000)
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleViewQR = (ticket: Ticket) => {
     setSelectedTicket(ticket)
-    setQrModalOpen(true)
   }
 
   const handleRedeem = (ticket: Ticket) => {
-    // Confirmation modal would go here
+    // Update ticket status to redeemed
+    setTickets(prev => prev.map(t => 
+      t.id === ticket.id 
+        ? { ...t, status: 'REDEEMED' as const }
+        : t
+    ))
+    
+    // Update localStorage
+    const updatedTickets = tickets.map(t => 
+      t.id === ticket.id 
+        ? { ...t, status: 'REDEEMED' as const }
+        : t
+    )
+    localStorage.setItem('ticketBastardTickets', JSON.stringify(updatedTickets.filter(t => !mockTickets.find(m => m.id === t.id))))
+    
     toast({
-      title: "Ticket redeemed",
-      description: `${ticket.eventName} • txid: ${ticket.outpoint.slice(0, 8)}...`
+      title: "Ticket Redeemed",
+      description: `${ticket.eventName} ticket has been redeemed`
     })
   }
 
-  const handleCopyOutpoint = (outpoint: string) => {
-    navigator.clipboard.writeText(outpoint)
+  const handleCopyOutpoint = async (ticket: Ticket) => {
+    try {
+      await navigator.clipboard.writeText(ticket.outpoint)
+      toast({
+        title: "Copied",
+        description: "Outpoint copied to clipboard"
+      })
+    } catch (err) {
+      console.error('Failed to copy outpoint:', err)
+    }
+  }
+
+  const handleTransfer = (ticket: Ticket) => {
+    setTransferModal({ isOpen: true, ticket })
+  }
+
+  const handleListForSale = (ticket: Ticket) => {
+    setSaleModal({ isOpen: true, ticket })
+  }
+
+  const handleTransferConfirm = (recipientAddress: string) => {
+    if (!transferModal.ticket) return
+    
+    // Remove ticket from current user's wallet
+    setTickets(prev => prev.filter(t => t.id !== transferModal.ticket!.id))
+    
+    // Update localStorage
+    const updatedTickets = tickets.filter(t => t.id !== transferModal.ticket!.id)
+    localStorage.setItem('ticketBastardTickets', JSON.stringify(updatedTickets.filter(t => !mockTickets.find(m => m.id === t.id))))
+    
     toast({
-      title: "Copied",
-      description: "Outpoint copied to clipboard"
+      title: "Ticket Transferred",
+      description: `Transferred to ${recipientAddress.slice(0, 8)}...`
     })
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Subtle CRT/VHS background */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute inset-0 opacity-[0.03] mix-blend-screen bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.08)_0px,rgba(255,255,255,.08)_1px,transparent_1px,transparent_3px)]" />
-      </div>
+  const handleSaleConfirm = (priceInSats: number) => {
+    if (!saleModal.ticket) return
+    
+    // Remove ticket from wallet and add to marketplace
+    setTickets(prev => prev.filter(t => t.id !== saleModal.ticket!.id))
+    
+    // Update localStorage  
+    const updatedTickets = tickets.filter(t => t.id !== saleModal.ticket!.id)
+    localStorage.setItem('ticketBastardTickets', JSON.stringify(updatedTickets.filter(t => !mockTickets.find(m => m.id === t.id))))
+    
+    toast({
+      title: "Listed for Sale",
+      description: `Listed at ${priceInSats.toLocaleString()} sats`
+    })
+  }
 
-      <div className="max-w-[1280px] mx-auto px-4 py-8">
-        {/* Title & Actions */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold font-mono tracking-wider">MY TICKETS</h1>
-          <Link to="/marketplace">
-            <Button
-              variant="neo"
-              className="font-mono text-sm tracking-wider"
-            >
-              [ + PURCHASE TICKET ]
-            </Button>
-          </Link>
-        </div>
+  const activeTickets = tickets.filter(ticket => ticket.status === "VALID")
+  const redeemedTickets = tickets.filter(ticket => ticket.status === "REDEEMED")
 
-        {/* Loading State */}
-        {loading && (
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <ScanlineOverlay />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase">MY TICKETS</h1>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-2">
+            {[...Array(4)].map((_, i) => (
               <TicketSkeleton key={i} />
             ))}
           </div>
-        )}
+        </div>
+      </div>
+    )
+  }
 
-        {/* Empty State */}
-        {!loading && tickets.length === 0 && (
+  return (
+    <div className="min-h-screen">
+      <ScanlineOverlay />
+      
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase">MY TICKETS</h1>
+          <Link 
+            to="/marketplace" 
+            className="bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-4 font-mono text-sm font-bold transition-all shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] no-underline"
+          >
+            [ PURCHASE TICKETS ]
+          </Link>
+        </div>
+
+        {activeTickets.length === 0 && redeemedTickets.length === 0 ? (
           <div className="text-center py-16">
-            <h2 className="text-xl font-bold mb-4">No tickets yet.</h2>
-            <p className="text-white/70 mb-8">Purchase your first ticket to get started.</p>
-            <Link to="/marketplace">
-              <Button
-                variant="neo-outline" 
-                className="font-mono tracking-wider"
+            <div className="border-2 border-white/20 rounded-lg p-8 max-w-md mx-auto bg-white/5">
+              <h2 className="text-xl font-bold text-white mb-4">No Tickets Found</h2>
+              <p className="text-white/70 mb-6">You don't have any tickets yet. Purchase some from the marketplace to get started.</p>
+              <Link 
+                to="/marketplace"
+                className="inline-block bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-4 font-mono text-sm font-bold transition-all shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] no-underline"
               >
                 [ BROWSE MARKETPLACE ]
-              </Button>
-            </Link>
-          </div>
-        )}
-
-        {/* Active Tickets */}
-        {!loading && activeTickets.length > 0 && (
-          <div className="space-y-4 mb-8">
-            {activeTickets.map(ticket => (
-              <TicketCard
-                key={ticket.id}
-                ticket={ticket}
-                onViewQR={() => handleViewQR(ticket)}
-                onRedeem={() => handleRedeem(ticket)}
-                onCopyOutpoint={() => handleCopyOutpoint(ticket.outpoint)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* History Section */}
-        {redeemedTickets.length > 0 && (
-          <div className="border-t border-white/20 pt-8">
-            <h2 className="text-xl font-bold font-mono tracking-wider mb-4 text-white/70">HISTORY</h2>
-            <div className="space-y-4">
-              {redeemedTickets.map(ticket => (
-                <TicketCard
-                  key={ticket.id}
-                  ticket={ticket}
-                  onViewQR={() => handleViewQR(ticket)}
-                  onRedeem={() => {}}
-                  onCopyOutpoint={() => handleCopyOutpoint(ticket.outpoint)}
-                />
-              ))}
+              </Link>
             </div>
           </div>
+        ) : (
+          <>
+            {/* Active Tickets */}
+            {activeTickets.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl font-bold text-white mb-6 font-mono uppercase">Active Tickets</h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {activeTickets.map((ticket) => (
+                    <TicketCard
+                      key={ticket.id}
+                      ticket={ticket}
+                      onViewQR={() => handleViewQR(ticket)}
+                      onRedeem={() => handleRedeem(ticket)}
+                      onCopyOutpoint={() => handleCopyOutpoint(ticket)}
+                      onTransfer={() => handleTransfer(ticket)}
+                      onListForSale={() => handleListForSale(ticket)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Redeemed Tickets History */}
+            {redeemedTickets.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold text-white mb-6 font-mono uppercase">History</h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {redeemedTickets.map((ticket) => (
+                    <TicketCard
+                      key={ticket.id}
+                      ticket={ticket}
+                      onViewQR={() => handleViewQR(ticket)}
+                      onRedeem={() => handleRedeem(ticket)}
+                      onCopyOutpoint={() => handleCopyOutpoint(ticket)}
+                      onTransfer={() => handleTransfer(ticket)}
+                      onListForSale={() => handleListForSale(ticket)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       {/* QR Modal */}
-      <QRModal
-        ticket={selectedTicket}
-        isOpen={qrModalOpen}
-        onClose={() => {
-          setQrModalOpen(false)
-          setSelectedTicket(null)
-        }}
+      <QRModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
+      
+      {/* Transfer Modal */}
+      <TransferModal
+        isOpen={transferModal.isOpen}
+        onClose={() => setTransferModal({isOpen: false, ticket: null})}
+        onConfirm={handleTransferConfirm}
+        ticketId={transferModal.ticket?.id || ''}
+        eventName={transferModal.ticket?.eventName || ''}
+      />
+      
+      {/* List for Sale Modal */}
+      <ListForSaleModal
+        isOpen={saleModal.isOpen}
+        onClose={() => setSaleModal({isOpen: false, ticket: null})}
+        onConfirm={handleSaleConfirm}
+        ticketId={saleModal.ticket?.id || ''}
+        eventName={saleModal.ticket?.eventName || ''}
+        originalPrice={saleModal.ticket?.priceInSats || 0}
       />
     </div>
   )
