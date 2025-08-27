@@ -53,7 +53,7 @@ export default function App({ children }: { children: React.ReactNode }) {
     <AccessibilityProvider>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         {!isHome && (
-          <header className="sticky top-0 z-50 bg-card border-b border-border py-4">
+          <header className="sticky top-0 z-50 bg-[hsl(222_84%_8%)] border-b border-border py-4">
             <div className="mx-auto px-4 max-w-[1000px]">
               <div className="flex justify-between items-center gap-4">
                 <Link to="/" className="flex items-center space-x-3 group" aria-label="TicketBastard Home">
@@ -62,7 +62,7 @@ export default function App({ children }: { children: React.ReactNode }) {
 
                 {/* Desktop Navigation */}
                 {isDesktop && (
-                  <nav className="flex items-center text-muted-foreground" role="navigation" aria-label="Main navigation">
+                  <nav className="flex items-center text-white/70" role="navigation" aria-label="Main navigation">
                     {navItems.map((item, index) => {
                       const isActive = pathname === item.path
                       return (
@@ -70,10 +70,10 @@ export default function App({ children }: { children: React.ReactNode }) {
                           key={item.path}
                           to={item.path}
                           onClick={() => setPathname(item.path)}
-                          className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                          className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                             isActive
-                              ? 'text-foreground underline underline-offset-8 decoration-2'
-                              : 'text-muted-foreground hover:text-foreground hover:underline underline-offset-8'
+                              ? 'text-white underline underline-offset-8 decoration-2'
+                              : 'text-white/70 hover:text-white hover:underline underline-offset-8'
                           }`}
                           style={{
                             textDecorationColor: isActive ? 'hsl(var(--primary))' : undefined,
@@ -112,7 +112,7 @@ export default function App({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Menu */}
         {!isHome && isMenuOpen && (
-          <div className={`fixed inset-0 z-40 bg-card md:hidden`} id="mobile-menu">
+          <div className={`fixed inset-0 z-40 bg-[hsl(222_84%_8%)] md:hidden`} id="mobile-menu">
             <nav className="flex flex-col items-start p-8 mt-16 space-y-2" role="navigation" aria-label="Mobile navigation">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -123,7 +123,7 @@ export default function App({ children }: { children: React.ReactNode }) {
                     to={item.path}
                     onClick={() => { setPathname(item.path); setIsMenuOpen(false) }}
                     className={`flex items-center w-full gap-3 text-lg font-semibold p-3 transition-colors ${
-                      isActive ? 'text-foreground underline underline-offset-8' : 'text-muted-foreground hover:text-foreground hover:underline underline-offset-8'
+                      isActive ? 'text-white underline underline-offset-8' : 'text-white/70 hover:text-white hover:underline underline-offset-8'
                     }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -152,11 +152,11 @@ export default function App({ children }: { children: React.ReactNode }) {
         </main>
         
         <footer className="mt-auto border-t border-border" role="contentinfo">
-          <div className="mx-auto px-4 py-6 text-sm text-muted-foreground flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1000px]">
+          <div className="mx-auto px-4 py-6 text-sm text-white/60 flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1000px]">
             <div>© {new Date().getFullYear()} TicketBastard. Fuck around and find out.</div>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-foreground transition-colors">Docs</a>
-              <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
+              <a href="#" className="hover:text-white transition-colors">Docs</a>
+              <a href="#" className="hover:text-white transition-colors">GitHub</a>
             </div>
           </div>
         </footer>

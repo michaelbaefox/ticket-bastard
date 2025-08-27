@@ -68,15 +68,8 @@ const FeedbackModal = ({ isOpen, onClose, eventName, eventId }: FeedbackModalPro
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black border-white/20 max-w-md">
         <DialogHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <DialogTitle className="font-mono uppercase text-sm">EVENT FEEDBACK</DialogTitle>
-              <div className="text-xs text-white/60 font-mono mt-1">{eventName}</div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <DialogTitle className="font-mono uppercase text-sm">EVENT FEEDBACK</DialogTitle>
+          <div className="text-xs text-white/60 font-mono mt-1">{eventName}</div>
         </DialogHeader>
 
         <div className="space-y-4">
