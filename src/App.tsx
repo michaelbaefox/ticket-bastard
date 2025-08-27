@@ -1,33 +1,10 @@
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AccessibilityProvider } from "@/components/AccessibilityProvider";
-import { navItems } from "./nav-items";
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
+import { Button } from './components/ui/button'
+import { Toaster as ShadcnToaster } from './components/ui/toaster'
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AccessibilityProvider>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <a href="#main-content" className="skip-link">
-            Skip to main content
-          </a>
-          <Routes>
-            {navItems.map(({ to, page }) => (
-              <Route key={to} path={to} element={page} />
-            ))}
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AccessibilityProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+export default function App({ children }: { children: React.ReactNode }) {
   const [pathname, setPathname] = useState(window.location.pathname)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
