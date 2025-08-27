@@ -7,6 +7,7 @@ import Index from './pages/Index'
 import Marketplace from './pages/Marketplace'
 import Tickets from './pages/Tickets'
 import Venue from './pages/Venue'
+import Organizer from './pages/Organizer'
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -16,6 +17,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/tickets" element={<Tickets />} />
         <Route path="/venue" element={<Venue />} />
+        <Route path="/organizer" element={<Organizer />} />
       </Routes>
     </App>
   </BrowserRouter>

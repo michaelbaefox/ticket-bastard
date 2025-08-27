@@ -120,25 +120,17 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen">
-      {/* Sticky Header */}
-      <nav className="sticky top-0 z-50 bg-black/70 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-[1280px] mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold font-mono tracking-wider text-white">MARKETPLACE</h1>
-          <div className="flex items-center gap-6 text-sm text-white/70">
-            <Link to="/" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Home</Link>
-            <Link to="/tickets" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">My Tickets</Link>
-            <Link to="/venue" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Venue</Link>
-            <Link to="/organizer" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Organizer</Link>
-          </div>
-        </div>
-      </nav>
-
       {/* Subtle scanline overlay */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 opacity-[0.03] mix-blend-screen bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.08)_0px,rgba(255,255,255,.08)_1px,transparent_1px,transparent_3px)]" />
       </div>
 
       <div className="max-w-[1280px] mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase mb-6">MARKETPLACE</h1>
+        </div>
+        
         {/* Toolbar */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">

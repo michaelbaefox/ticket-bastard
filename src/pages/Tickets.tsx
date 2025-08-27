@@ -333,27 +333,6 @@ const Tickets: React.FC = () => {
         <div className="absolute inset-0 opacity-[0.03] mix-blend-screen bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.08)_0px,rgba(255,255,255,.08)_1px,transparent_1px,transparent_3px)]" />
       </div>
 
-      {/* Header Navigation */}
-      <nav className="sticky top-0 z-40 bg-black/70 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-[1280px] mx-auto px-4 py-4 flex justify-between items-center">
-          <Link to="/" className="font-bold text-xl">TicketBastard</Link>
-          <div className="flex gap-6 text-sm text-white/70">
-            <Link to="/marketplace" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">
-              Marketplace
-            </Link>
-            <Link to="/tickets" className="text-white underline underline-offset-4">
-              My Tickets
-            </Link>
-            <Link to="/venue" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">
-              Venue
-            </Link>
-            <Link to="/organizer" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">
-              Organizer
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       <div className="max-w-[1280px] mx-auto px-4 py-8">
         {/* Title & Actions */}
         <div className="flex justify-between items-center mb-8">
