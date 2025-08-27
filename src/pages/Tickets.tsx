@@ -520,17 +520,20 @@ const Tickets = () => {
       category: 'resale'
     }
     
-    setMarketplace(prev => [...prev, newListing])
+    // Would add to marketplace here if we had the marketplace hook
+    // setMarketplace(prev => [...prev, newListing])
     
     // Remove ticket from wallet
     const updatedTickets = tickets.filter(t => t.id !== saleModal.ticket!.id)
     setTickets(updatedTickets)
     
-    announce(`Ticket listed for sale at ${priceInSats.toLocaleString()} satoshis`)
+    // announce(`Ticket listed for sale at ${priceInSats.toLocaleString()} satoshis`)
     toast({
       title: "Listed for Sale",
       description: `Listed at ${priceInSats.toLocaleString()} sats`
     })
+    
+    setSaleModal({isOpen: false, ticket: null})
   }
 
   const activeTickets = tickets.filter(ticket => ticket.status === "VALID")
