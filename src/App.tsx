@@ -1,8 +1,8 @@
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Toaster as ShadcnToaster } from './components/ui/toaster'
-import React, { useState } from 'react'
 
 export default function App({ children }: { children: React.ReactNode }) {
   const [pathname, setPathname] = useState(window.location.pathname)
@@ -20,11 +20,11 @@ export default function App({ children }: { children: React.ReactNode }) {
     { path: '/organizer', label: 'Organizer', icon: BarChart3 },
   ]
   
-  React.useEffect(() => {
+  useEffect(() => {
     setIsMenuOpen(false)
   }, [pathname])
 
-  React.useEffect(() => {
+  useEffect(() => {
     const onResize = () => {
       const desktop = window.innerWidth >= 768
       setIsDesktop(desktop)
@@ -41,7 +41,7 @@ export default function App({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Close mobile menu on desktop widths
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) setIsMenuOpen(false)
     }
