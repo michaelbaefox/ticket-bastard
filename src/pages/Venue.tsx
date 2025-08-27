@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { Scanner } from '@yudiel/react-qr-scanner';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Zap, FlipHorizontal, Edit3, Copy } from 'lucide-react';
@@ -37,7 +37,7 @@ async function verifyTicket(payload: string): Promise<ScanResult> {
 }
 
 const Venue = () => {
-  const [isScanning, setIsScanning] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [currentBanner, setCurrentBanner] = useState<ScanResult | null>(null);
@@ -45,13 +45,104 @@ const Venue = () => {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualInput, setManualInput] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [currentDeviceId, setCurrentDeviceId] = useState<string>('');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const lastScannedRef = useRef<{ payload: string; timestamp: number } | null>(null);
 
-  const handleScan = useCallback(async (detectedCodes: any[]) => {
-    if (detectedCodes.length === 0) return;
-    
-    const result = detectedCodes[0].rawValue;
-    
+  // Initialize camera and scanner
+  useEffect(() => {
+    const initScanner = async () => {
+      try {
+        // Get available devices
+        const videoDevices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = videoDevices.filter(device => device.kind === 'videoinput');
+        setDevices(cameras);
+        
+        if (cameras.length > 0) {
+          const preferredCamera = cameras.find(camera => 
+            camera.label.toLowerCase().includes('back') || 
+            camera.label.toLowerCase().includes('rear')
+          ) || cameras[0];
+          setCurrentDeviceId(preferredCamera.deviceId);
+        }
+
+        // Initialize code reader
+        codeReaderRef.current = new BrowserMultiFormatReader();
+      } catch (error) {
+        console.error('Failed to initialize scanner:', error);
+      }
+    };
+
+    initScanner();
+
+    return () => {
+      // Cleanup
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Start scanning
+  const startScanning = useCallback(async () => {
+    if (!codeReaderRef.current || !videoRef.current) return;
+
+    try {
+      const deviceId = currentDeviceId || undefined;
+      
+      await codeReaderRef.current.decodeFromVideoDevice(
+        deviceId,
+        videoRef.current,
+        (result, error) => {
+          if (result) {
+            handleScan(result.getText());
+          }
+        }
+      );
+      
+      setIsScanning(true);
+      
+      // Get the stream for torch control
+      const constraints = {
+        video: { deviceId: deviceId ? { exact: deviceId } : undefined }
+      };
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      setStream(mediaStream);
+      
+    } catch (error) {
+      console.error('Failed to start scanning:', error);
+    }
+  }, [currentDeviceId]);
+
+  // Stop scanning
+  const stopScanning = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsScanning(false);
+  }, [stream]);
+
+  // Toggle scanning
+  useEffect(() => {
+    if (isScanning) {
+      startScanning();
+    } else {
+      stopScanning();
+    }
+  }, [isScanning, startScanning, stopScanning]);
+
+  // Auto-start scanning
+  useEffect(() => {
+    if (currentDeviceId && !isScanning) {
+      setIsScanning(true);
+    }
+  }, [currentDeviceId]);
+
+  const handleScan = useCallback(async (result: string) => {
     // Debounce duplicate scans
     const now = Date.now();
     if (lastScannedRef.current && 
@@ -82,6 +173,41 @@ const Venue = () => {
       setIsVerifying(false);
     }
   }, []);
+
+  // Toggle torch
+  const toggleTorch = useCallback(async () => {
+    if (!stream) return;
+    
+    const track = stream.getVideoTracks()[0];
+    if (!track) return;
+    
+    try {
+      const capabilities = track.getCapabilities();
+      if ('torch' in capabilities) {
+        await track.applyConstraints({
+          advanced: [{ torch: !isTorchOn } as any]
+        });
+        setIsTorchOn(!isTorchOn);
+      }
+    } catch (error) {
+      console.error('Torch toggle failed:', error);
+    }
+  }, [stream, isTorchOn]);
+
+  // Flip camera
+  const flipCamera = useCallback(() => {
+    if (devices.length > 1) {
+      const currentIndex = devices.findIndex(device => device.deviceId === currentDeviceId);
+      const nextIndex = (currentIndex + 1) % devices.length;
+      setCurrentDeviceId(devices[nextIndex].deviceId);
+      
+      // Restart scanning with new device
+      if (isScanning) {
+        setIsScanning(false);
+        setTimeout(() => setIsScanning(true), 100);
+      }
+    }
+  }, [devices, currentDeviceId, isScanning]);
 
   const handleManualVerify = async () => {
     if (!manualInput.trim()) return;
@@ -155,9 +281,10 @@ const Venue = () => {
               <Button
                 variant="neo-outline"
                 size="sm"
-                onClick={() => setIsTorchOn(!isTorchOn)}
+                onClick={toggleTorch}
                 aria-label="Toggle torch"
                 className="text-xs font-mono uppercase px-2 py-1"
+                disabled={!stream}
               >
                 <Zap className="w-3 h-3" />
                 TORCH
@@ -165,9 +292,10 @@ const Venue = () => {
               <Button
                 variant="neo-outline"
                 size="sm"
-                onClick={() => setFacingMode(facingMode === 'user' ? 'environment' : 'user')}
+                onClick={flipCamera}
                 aria-label="Flip camera"
                 className="text-xs font-mono uppercase px-2 py-1"
+                disabled={devices.length <= 1}
               >
                 <FlipHorizontal className="w-3 h-3" />
                 FLIP
@@ -190,15 +318,25 @@ const Venue = () => {
             {/* Scan Frame Overlay */}
             <div className="absolute inset-4 border-2 border-white/50 rounded-md z-10 pointer-events-none" />
             
-            {isScanning && (
-              <Scanner
-                onScan={handleScan}
-                onError={(error) => console.error('QR Scanner error:', error)}
-                constraints={{
-                  facingMode: facingMode
-                }}
-                allowMultiple={false}
-              />
+            {/* Video Element */}
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              playsInline
+              muted
+              autoPlay
+            />
+            
+            {!isScanning && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <Button
+                  variant="neo"
+                  onClick={() => setIsScanning(true)}
+                  className="text-xs font-mono uppercase"
+                >
+                  [ START SCANNING ]
+                </Button>
+              </div>
             )}
           </div>
 
