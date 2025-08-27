@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Shuffle, Calendar, DollarSign } from 'lucide-react';
 
 // Types
 type OrganizerEvent = {
@@ -98,11 +98,13 @@ const mockEvents: OrganizerEvent[] = [
 
 const Organizer = () => {
   const [events, setEvents] = useState<OrganizerEvent[]>(mockEvents);
-  const [query, setQuery] = useState<OrganizerQuery>({});
+  const [query, setQuery] = useState<OrganizerQuery>({ page: 1, perPage: 10 });
   const [selectedEvent, setSelectedEvent] = useState<OrganizerEvent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [density, setDensity] = useState<'compact' | 'normal'>('normal');
+  const [autoGenerateId, setAutoGenerateId] = useState(true);
 
   // Create event form state
   const [newEvent, setNewEvent] = useState({
@@ -117,16 +119,26 @@ const Organizer = () => {
     venueSink: ''
   });
 
-  // URL state management
+  useEffect(() => {
+    if (autoGenerateId && newEvent.name) {
+      const id = `evt_${Date.now()}_${newEvent.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)}`;
+      setNewEvent(prev => ({ ...prev, eventId: id }));
+    }
+  }, [newEvent.name, autoGenerateId]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const newQuery: OrganizerQuery = {};
+    const newQuery: OrganizerQuery = { page: 1, perPage: 10 };
     
     if (params.get('q')) newQuery.q = params.get('q')!;
     if (params.get('status')) newQuery.status = params.get('status') as any;
     if (params.get('venue')) newQuery.venue = params.get('venue')!;
+    if (params.get('min')) newQuery.min = parseInt(params.get('min')!);
+    if (params.get('max')) newQuery.max = parseInt(params.get('max')!);
+    if (params.get('from')) newQuery.from = params.get('from')!;
+    if (params.get('to')) newQuery.to = params.get('to')!;
     if (params.get('sort')) newQuery.sort = params.get('sort') as any;
-    if (params.get('page')) newQuery.page = parseInt(params.get('page')!);
+    if (params.get('page')) newQuery.page = parseInt(params.get('page')!) || 1;
+    if (params.get('perPage')) newQuery.perPage = parseInt(params.get('perPage')!) || 10;
     
     setQuery(newQuery);
   }, []);
@@ -143,7 +155,7 @@ const Organizer = () => {
   }, []);
 
   // Filter and sort events
-  const filteredEvents = events.filter(event => {
+  const allFilteredEvents = events.filter(event => {
     if (query.q && !event.name.toLowerCase().includes(query.q.toLowerCase()) && 
         !event.eventId.toLowerCase().includes(query.q.toLowerCase()) &&
         !event.venue?.toLowerCase().includes(query.q.toLowerCase())) {
@@ -156,6 +168,22 @@ const Organizer = () => {
     }
     
     if (query.venue && !event.venue?.toLowerCase().includes(query.venue.toLowerCase())) {
+      return false;
+    }
+
+    if (query.min && event.priceSats < query.min) {
+      return false;
+    }
+
+    if (query.max && event.priceSats > query.max) {
+      return false;
+    }
+
+    if (query.from && new Date(event.startsAtISO) < new Date(query.from)) {
+      return false;
+    }
+
+    if (query.to && new Date(event.startsAtISO) > new Date(query.to)) {
       return false;
     }
     
@@ -179,6 +207,14 @@ const Organizer = () => {
     }
   });
 
+  // Pagination
+  const totalEvents = allFilteredEvents.length;
+  const currentPage = query.page || 1;
+  const perPage = query.perPage || 10;
+  const totalPages = Math.ceil(totalEvents / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const filteredEvents = allFilteredEvents.slice(startIndex, startIndex + perPage);
+
   // Calculate KPIs
   const kpis = {
     revenue: events.reduce((sum, e) => sum + e.revenueSats, 0),
@@ -197,14 +233,43 @@ const Organizer = () => {
       return;
     }
 
+    // Time validation
+    const startDate = new Date(newEvent.startsAt);
+    const endDate = new Date(newEvent.endsAt);
+    const now = new Date();
+
+    if (startDate <= now) {
+      toast({ description: "Start time must be in the future", variant: "destructive" });
+      return;
+    }
+
+    if (endDate <= startDate) {
+      toast({ description: "End time must be after start time", variant: "destructive" });
+      return;
+    }
+
+    // Numeric validation
+    const capacity = parseInt(newEvent.capacity);
+    const price = parseInt(newEvent.price);
+
+    if (capacity <= 0 || capacity > 100000) {
+      toast({ description: "Capacity must be between 1 and 100,000", variant: "destructive" });
+      return;
+    }
+
+    if (price <= 0 || price > 100000000) {
+      toast({ description: "Price must be between 1 and 100,000,000 sats", variant: "destructive" });
+      return;
+    }
+
     const event: OrganizerEvent = {
       eventId: newEvent.eventId,
       name: newEvent.name,
       venue: newEvent.venue,
       startsAtISO: newEvent.startsAt,
       endsAtISO: newEvent.endsAt,
-      capacity: parseInt(newEvent.capacity),
-      priceSats: parseInt(newEvent.price),
+      capacity,
+      priceSats: price,
       protocolAddr: newEvent.protocolAddr,
       venueSink: newEvent.venueSink,
       salesOpen: true,
@@ -223,6 +288,47 @@ const Organizer = () => {
     toast({ 
       description: `Event created • id ${truncateMiddle(event.eventId)}` 
     });
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Event ID', 'Name', 'Venue', 'Start Date', 'End Date', 'Capacity', 'Sold', 'Revenue (sats)', 'Status'];
+    const rows = allFilteredEvents.map(event => [
+      event.eventId,
+      event.name,
+      event.venue || '',
+      event.startsAtISO,
+      event.endsAtISO,
+      event.capacity,
+      event.sold,
+      event.revenueSats,
+      getEventStatus(event.startsAtISO, event.endsAtISO)
+    ]);
+
+    const csvContent = [headers, ...rows].map(row => 
+      row.map(field => `"${field}"`).join(',')
+    ).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'organizer-events.csv';
+    link.click();
+    
+    toast({ description: "CSV exported successfully" });
+  };
+
+  const getSortIcon = (column: string) => {
+    if (!query.sort) return <ArrowUpDown className="w-3 h-3 ml-1" />;
+    
+    const [sortColumn, direction] = query.sort.includes('_asc') 
+      ? [query.sort.replace('_asc', ''), 'asc']
+      : [query.sort.replace('_desc', ''), 'desc'];
+    
+    if (sortColumn !== column) return <ArrowUpDown className="w-3 h-3 ml-1" />;
+    
+    return direction === 'asc' 
+      ? <ArrowUp className="w-3 h-3 ml-1" />
+      : <ArrowDown className="w-3 h-3 ml-1" />;
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -294,38 +400,106 @@ const Organizer = () => {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap gap-4 mb-6 p-4 border border-white/20 rounded-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+        <div className="space-y-4 mb-6 p-4 border border-white/20 rounded-md">
+          {/* First Row */}
+          <div className="flex flex-wrap gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+              <Input
+                placeholder="Search events..."
+                value={query.q || ''}
+                onChange={(e) => updateURL({ ...query, q: e.target.value })}
+                className="pl-10 font-mono w-64"
+              />
+            </div>
+            
+            <select
+              value={query.status || ''}
+              onChange={(e) => updateURL({ ...query, status: e.target.value as any })}
+              className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm"
+            >
+              <option value="">All Status</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="live">Live</option>
+              <option value="ended">Ended</option>
+            </select>
+
             <Input
-              placeholder="Search events..."
-              value={query.q || ''}
-              onChange={(e) => updateURL({ ...query, q: e.target.value })}
-              className="pl-10 font-mono"
+              placeholder="Venue filter..."
+              value={query.venue || ''}
+              onChange={(e) => updateURL({ ...query, venue: e.target.value })}
+              className="font-mono w-40"
             />
+
+            <Button 
+              variant="neo-outline" 
+              className="font-mono uppercase text-xs"
+              onClick={exportToCSV}
+            >
+              <Download className="w-3 h-3 mr-1" />
+              [ EXPORT CSV ]
+            </Button>
           </div>
-          
-          <select
-            value={query.status || ''}
-            onChange={(e) => updateURL({ ...query, status: e.target.value as any })}
-            className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm"
-          >
-            <option value="">All Status</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="live">Live</option>
-            <option value="ended">Ended</option>
-          </select>
 
-          <Input
-            placeholder="Venue filter..."
-            value={query.venue || ''}
-            onChange={(e) => updateURL({ ...query, venue: e.target.value })}
-            className="font-mono w-40"
-          />
+          {/* Second Row */}
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-white/60" />
+              <Input
+                placeholder="Min price"
+                type="number"
+                value={query.min || ''}
+                onChange={(e) => updateURL({ ...query, min: e.target.value ? parseInt(e.target.value) : undefined })}
+                className="font-mono w-24"
+              />
+              <span className="text-white/60">-</span>
+              <Input
+                placeholder="Max price"
+                type="number"
+                value={query.max || ''}
+                onChange={(e) => updateURL({ ...query, max: e.target.value ? parseInt(e.target.value) : undefined })}
+                className="font-mono w-24"
+              />
+              <span className="text-xs text-white/60 font-mono">sats</span>
+            </div>
 
-          <Button variant="neo-outline" className="font-mono uppercase text-xs">
-            [ EXPORT CSV ]
-          </Button>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-white/60" />
+              <Input
+                type="date"
+                value={query.from || ''}
+                onChange={(e) => updateURL({ ...query, from: e.target.value })}
+                className="font-mono w-36"
+              />
+              <span className="text-white/60">-</span>
+              <Input
+                type="date"
+                value={query.to || ''}
+                onChange={(e) => updateURL({ ...query, to: e.target.value })}
+                className="font-mono w-36"
+              />
+            </div>
+
+            <select
+              value={query.perPage || 10}
+              onChange={(e) => updateURL({ ...query, perPage: parseInt(e.target.value), page: 1 })}
+              className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm"
+            >
+              <option value={5}>5 per page</option>
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+              <option value={50}>50 per page</option>
+            </select>
+
+            <Button
+              variant="neo-outline"
+              size="sm"
+              onClick={() => setDensity(density === 'compact' ? 'normal' : 'compact')}
+              className="font-mono uppercase text-xs"
+            >
+              {density === 'compact' ? 'NORMAL' : 'COMPACT'}
+            </Button>
+          </div>
         </div>
 
         {/* Events Table */}
@@ -334,18 +508,36 @@ const Organizer = () => {
             <table className="w-full">
               <thead className="border-b border-white/20">
                 <tr className="bg-white/5">
-                  <th className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10"
-                      onClick={() => updateURL({ ...query, sort: query.sort === 'date_asc' ? 'date_desc' : 'date_asc' })}>
-                    EVENT / DATE
+                  <th 
+                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10 select-none"
+                    onClick={() => updateURL({ ...query, sort: query.sort === 'date_asc' ? 'date_desc' : 'date_asc' })}
+                    aria-sort={query.sort?.includes('date') ? (query.sort.includes('asc') ? 'ascending' : 'descending') : 'none'}
+                  >
+                    <div className="flex items-center">
+                      EVENT / DATE
+                      {getSortIcon('date')}
+                    </div>
                   </th>
                   <th className="text-left p-4 font-mono uppercase text-xs">VENUE</th>
-                  <th className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10"
-                      onClick={() => updateURL({ ...query, sort: 'fill_desc' })}>
-                    CAPACITY / SOLD
+                  <th 
+                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10 select-none"
+                    onClick={() => updateURL({ ...query, sort: 'fill_desc' })}
+                    aria-sort={query.sort === 'fill_desc' ? 'descending' : 'none'}
+                  >
+                    <div className="flex items-center">
+                      CAPACITY / SOLD
+                      {getSortIcon('fill')}
+                    </div>
                   </th>
-                  <th className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10"
-                      onClick={() => updateURL({ ...query, sort: 'revenue_desc' })}>
-                    REVENUE
+                  <th 
+                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10 select-none"
+                    onClick={() => updateURL({ ...query, sort: 'revenue_desc' })}
+                    aria-sort={query.sort === 'revenue_desc' ? 'descending' : 'none'}
+                  >
+                    <div className="flex items-center">
+                      REVENUE
+                      {getSortIcon('revenue')}
+                    </div>
                   </th>
                   <th className="text-left p-4 font-mono uppercase text-xs">STATUS</th>
                 </tr>
@@ -354,25 +546,25 @@ const Organizer = () => {
                 {filteredEvents.map((event) => (
                   <tr 
                     key={event.eventId}
-                    className="border-b border-white/20 hover:bg-white/5 cursor-pointer"
+                    className={`border-b border-white/20 hover:bg-white/5 cursor-pointer ${density === 'compact' ? '' : ''}`}
                     onClick={() => {
                       setSelectedEvent(event);
                       setShowDrawer(true);
                     }}
                   >
-                    <td className="p-4">
+                    <td className={density === 'compact' ? 'p-2' : 'p-4'}>
                       <div className="font-semibold">{event.name}</div>
                       <div className="text-xs font-mono text-white/60">
                         {formatWindow(event.startsAtISO, event.endsAtISO)}
                       </div>
                     </td>
-                    <td className="p-4 text-sm">{event.venue || '—'}</td>
-                    <td className="p-4">
+                    <td className={`text-sm ${density === 'compact' ? 'p-2' : 'p-4'}`}>{event.venue || '—'}</td>
+                    <td className={density === 'compact' ? 'p-2' : 'p-4'}>
                       <div className="font-mono">{formatNumber(event.sold)} / {formatNumber(event.capacity)}</div>
                       <div className="text-xs text-white/60">{pct(event.sold / event.capacity)} filled</div>
                     </td>
-                    <td className="p-4 font-mono">{formatNumber(event.revenueSats)} sats</td>
-                    <td className="p-4">{getStatusPill(event)}</td>
+                    <td className={`font-mono ${density === 'compact' ? 'p-2' : 'p-4'}`}>{formatNumber(event.revenueSats)} sats</td>
+                    <td className={density === 'compact' ? 'p-2' : 'p-4'}>{getStatusPill(event)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -381,14 +573,29 @@ const Organizer = () => {
         </div>
 
         {/* Pagination */}
-        <div className="flex justify-center items-center gap-4 mt-6">
-          <Button variant="neo-outline" size="sm" disabled>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="font-mono text-sm">PAGE 1 OF 1</span>
-          <Button variant="neo-outline" size="sm" disabled>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+        <div className="flex justify-between items-center mt-6">
+          <div className="text-sm text-white/60 font-mono">
+            Showing {startIndex + 1}-{Math.min(startIndex + perPage, totalEvents)} of {totalEvents} events
+          </div>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="neo-outline" 
+              size="sm" 
+              disabled={currentPage === 1}
+              onClick={() => updateURL({ ...query, page: currentPage - 1 })}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="font-mono text-sm">PAGE {currentPage} OF {totalPages}</span>
+            <Button 
+              variant="neo-outline" 
+              size="sm" 
+              disabled={currentPage === totalPages}
+              onClick={() => updateURL({ ...query, page: currentPage + 1 })}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </main>
 
@@ -451,6 +658,24 @@ const Organizer = () => {
                 </div>
               </div>
 
+              {/* Recent Activity */}
+              <div className="space-y-2">
+                <div className="text-sm font-mono uppercase text-white/60">Recent Activity</div>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {[
+                    { time: '2 min ago', action: 'Ticket purchased by bc1q...7x8z' },
+                    { time: '5 min ago', action: 'Ticket redeemed at entrance' },
+                    { time: '12 min ago', action: 'Ticket transferred to bc1q...9a2b' },
+                    { time: '18 min ago', action: 'Ticket purchased by bc1q...3c4d' }
+                  ].map((activity, i) => (
+                    <div key={i} className="text-xs p-2 bg-white/5 rounded border border-white/10">
+                      <div className="text-white/60 font-mono">{activity.time}</div>
+                      <div className="text-white/90">{activity.action}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Quick Actions */}
               <div className="space-y-2">
                 <Button 
@@ -490,95 +715,135 @@ const Organizer = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-mono uppercase mb-2">Event Name *</label>
-                <Input
-                  value={newEvent.name}
-                  onChange={(e) => setNewEvent({...newEvent, name: e.target.value})}
-                  placeholder="Bitcoin Conference 2025"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-mono uppercase mb-2">Event ID *</label>
-                <Input
-                  value={newEvent.eventId}
-                  onChange={(e) => setNewEvent({...newEvent, eventId: e.target.value})}
-                  placeholder="evt_1234567890abcdef"
-                  className="font-mono"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-mono mb-1">Event Name *</label>
+              <Input
+                value={newEvent.name}
+                onChange={(e) => {
+                  setNewEvent({ ...newEvent, name: e.target.value });
+                  if (autoGenerateId && e.target.value) {
+                    const id = `evt_${Date.now()}_${e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)}`;
+                    setNewEvent(prev => ({ ...prev, eventId: id }));
+                  }
+                }}
+                placeholder="Bitcoin Conference 2025"
+                className="font-mono"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase mb-2">Venue</label>
+              <label className="block text-sm font-mono mb-1 flex items-center gap-2">
+                Event ID *
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoGenerateId}
+                    onChange={(e) => {
+                      setAutoGenerateId(e.target.checked);
+                      if (e.target.checked && newEvent.name) {
+                        const id = `evt_${Date.now()}_${newEvent.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)}`;
+                        setNewEvent({ ...newEvent, eventId: id });
+                      }
+                    }}
+                    className="w-3 h-3"
+                  />
+                  <span className="text-xs text-white/60">Auto-generate</span>
+                </label>
+              </label>
+              <Input
+                value={newEvent.eventId}
+                onChange={(e) => setNewEvent({ ...newEvent, eventId: e.target.value })}
+                placeholder="evt_1234567890abcdef"
+                className="font-mono"
+                disabled={autoGenerateId}
+              />
+              <div className="text-xs text-white/60 mt-1">Unique identifier for this event</div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-mono mb-1">Venue</label>
               <Input
                 value={newEvent.venue}
-                onChange={(e) => setNewEvent({...newEvent, venue: e.target.value})}
+                onChange={(e) => setNewEvent({ ...newEvent, venue: e.target.value })}
                 placeholder="Convention Center"
+                className="font-mono"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-mono uppercase mb-2">Starts At *</label>
+                <label className="block text-sm font-mono mb-1">Start Time *</label>
                 <Input
                   type="datetime-local"
                   value={newEvent.startsAt}
-                  onChange={(e) => setNewEvent({...newEvent, startsAt: e.target.value})}
+                  onChange={(e) => setNewEvent({ ...newEvent, startsAt: e.target.value })}
+                  className="font-mono"
+                  min={new Date().toISOString().slice(0, 16)}
                 />
+                <div className="text-xs text-white/60 mt-1">Must be in the future</div>
               </div>
               <div>
-                <label className="block text-xs font-mono uppercase mb-2">Ends At *</label>
+                <label className="block text-sm font-mono mb-1">End Time *</label>
                 <Input
                   type="datetime-local"
                   value={newEvent.endsAt}
-                  onChange={(e) => setNewEvent({...newEvent, endsAt: e.target.value})}
+                  onChange={(e) => setNewEvent({ ...newEvent, endsAt: e.target.value })}
+                  className="font-mono"
+                  min={newEvent.startsAt}
                 />
+                <div className="text-xs text-white/60 mt-1">Must be after start time</div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-mono uppercase mb-2">Capacity *</label>
+                <label className="block text-sm font-mono mb-1">Capacity *</label>
                 <Input
                   type="number"
                   value={newEvent.capacity}
-                  onChange={(e) => setNewEvent({...newEvent, capacity: e.target.value})}
+                  onChange={(e) => setNewEvent({ ...newEvent, capacity: e.target.value })}
                   placeholder="500"
+                  className="font-mono"
+                  min="1"
+                  max="100000"
                 />
+                <div className="text-xs text-white/60 mt-1">Max 100,000 attendees</div>
               </div>
               <div>
-                <label className="block text-xs font-mono uppercase mb-2">Price (sats) *</label>
+                <label className="block text-sm font-mono mb-1">Price (sats) *</label>
                 <Input
                   type="number"
                   value={newEvent.price}
-                  onChange={(e) => setNewEvent({...newEvent, price: e.target.value})}
+                  onChange={(e) => setNewEvent({ ...newEvent, price: e.target.value })}
                   placeholder="50000"
                   className="font-mono"
+                  min="1"
+                  max="100000000"
                 />
+                <div className="text-xs text-white/60 mt-1">Max 100M sats</div>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase mb-2">Protocol Address *</label>
+              <label className="block text-sm font-mono mb-1">Protocol Address *</label>
               <Input
                 value={newEvent.protocolAddr}
-                onChange={(e) => setNewEvent({...newEvent, protocolAddr: e.target.value})}
+                onChange={(e) => setNewEvent({ ...newEvent, protocolAddr: e.target.value })}
                 placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
                 className="font-mono"
               />
+              <div className="text-xs text-white/60 mt-1">Bitcoin address for protocol fees</div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase mb-2">Venue Sink Script / Address *</label>
+              <label className="block text-sm font-mono mb-1">Venue Sink Address *</label>
               <Input
                 value={newEvent.venueSink}
-                onChange={(e) => setNewEvent({...newEvent, venueSink: e.target.value})}
+                onChange={(e) => setNewEvent({ ...newEvent, venueSink: e.target.value })}
                 placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
                 className="font-mono"
               />
-              <div className="text-xs text-white/60 mt-1">Where redemptions are sent</div>
+              <div className="text-xs text-white/60 mt-1">Bitcoin address for venue payouts</div>
             </div>
 
             <div className="flex gap-4 pt-4">
