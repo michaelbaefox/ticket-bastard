@@ -108,5 +108,20 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Explicit fallback for environments without Tailwind */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Ensure dark theme is applied by default */
+  html {
+    @apply bg-background;
+    background-color: hsl(var(--background));
+  }
+
+  /* Force dark theme if no class is present */
+  html:not(.light) {
+    --background: 0 0% 0%; /* Pure black fallback */
+    --foreground: 0 0% 100%; /* Pure white text */
   }
 }
