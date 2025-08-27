@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
-import { Button } from './lib/ui'
+import { Button } from './components/ui/button'
 import React, { useState } from 'react'
 
 export default function App({ children }: { children: React.ReactNode }) {
