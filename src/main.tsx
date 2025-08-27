@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Index from './pages/Index'
 import Marketplace from './pages/Marketplace'
 import Tickets from './pages/Tickets'
+import Venue from './pages/Venue'
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -14,6 +15,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/" element={<Index />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/tickets" element={<Tickets />} />
+        <Route path="/venue" element={<Venue />} />
       </Routes>
     </App>
   </BrowserRouter>
