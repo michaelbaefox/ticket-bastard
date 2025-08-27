@@ -1,15 +1,14 @@
-import { Link, useLocation } from 'react-router-dom'
-import { Toaster } from 'react-hot-toast'
+import { Link } from 'react-router-dom'
 import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Toaster as ShadcnToaster } from './components/ui/toaster'
 import React, { useState } from 'react'
 
 export default function App({ children }: { children: React.ReactNode }) {
-  const location = useLocation()
+  const [pathname, setPathname] = useState(window.location.pathname)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
-  const isHome = location.pathname === '/'
+  const isHome = pathname === '/'
 
   const navItems = [
     { path: '/marketplace', label: 'Marketplace', icon: ShoppingCart },
@@ -20,7 +19,7 @@ export default function App({ children }: { children: React.ReactNode }) {
   
   React.useEffect(() => {
     setIsMenuOpen(false)
-  }, [location.pathname])
+  }, [pathname])
 
   React.useEffect(() => {
     const onResize = () => {
@@ -30,7 +29,12 @@ export default function App({ children }: { children: React.ReactNode }) {
     }
     onResize()
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    const onPop = () => setPathname(window.location.pathname)
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('popstate', onPop)
+    }
   }, [])
 
   // Close mobile menu on desktop widths
@@ -57,11 +61,12 @@ export default function App({ children }: { children: React.ReactNode }) {
               {isDesktop && (
                 <nav className="flex items-center text-text-secondary">
                   {navItems.map((item, index) => {
-                    const isActive = location.pathname === item.path
+                    const isActive = pathname === item.path
                     return (
                       <Link
                         key={item.path}
                         to={item.path}
+                        onClick={() => setPathname(item.path)}
                         className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark ${
                           isActive
                             ? 'text-text-primary underline underline-offset-8 decoration-2'
@@ -100,11 +105,12 @@ export default function App({ children }: { children: React.ReactNode }) {
           <nav className="flex flex-col items-start p-8 mt-16 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = location.pathname === item.path
+              const isActive = pathname === item.path
               return (
                 <Link
                   key={item.path}
                   to={item.path}
+                  onClick={() => { setPathname(item.path); setIsMenuOpen(false) }}
                   className={`flex items-center w-full gap-3 text-lg font-semibold p-3 ${
                     isActive ? 'text-text-primary underline underline-offset-8' : 'text-text-secondary hover:text-text-primary hover:underline underline-offset-8'
                   }`}
@@ -139,16 +145,6 @@ export default function App({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      <Toaster position="bottom-left" toastOptions={{
-        duration: 3000,
-        style: {
-          background: '#141414',
-          color: '#F5F5F5',
-          border: '1px solid #262626',
-          borderRadius: '8px',
-          padding: '12px'
-        },
-      }} />
       <ShadcnToaster />
     </div>
   )

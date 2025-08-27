@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -124,10 +125,10 @@ export default function Marketplace() {
         <div className="max-w-[1280px] mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold font-mono tracking-wider text-white">MARKETPLACE</h1>
           <div className="flex items-center gap-6 text-sm text-white/70">
-            <a href="/" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Home</a>
-            <a href="/tickets" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">My Tickets</a>
-            <a href="/venue" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Venue</a>
-            <a href="/organizer" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Organizer</a>
+            <Link to="/" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Home</Link>
+            <Link to="/tickets" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">My Tickets</Link>
+            <Link to="/venue" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Venue</Link>
+            <Link to="/organizer" className="hover:text-white hover:underline underline-offset-4 transition-colors duration-200">Organizer</Link>
           </div>
         </div>
       </nav>
