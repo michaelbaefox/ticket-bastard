@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PurchaseModal } from "@/components/PurchaseModal";
-import FeedbackModal from "@/components/FeedbackModal";
+import { FeedbackModal } from "@/components/FeedbackModal";
 import { useToast } from "@/hooks/use-toast";
 import { useMarketplace, useEvents } from "@/hooks/useLocalStorage";
 import { useScreenReader, a11yUtils } from "@/hooks/useAccessibility";
