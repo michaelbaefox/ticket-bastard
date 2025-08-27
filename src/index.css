@@ -9,7 +9,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Neo-brutalist dark theme */
-    --background: 0 0% 0%;
+    --background: 222 84% 5%;
     --foreground: 0 0% 100%;
 
     --card: 222 84% 8%;

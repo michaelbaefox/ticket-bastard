@@ -20,8 +20,6 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         neo: "bg-neo-cyan text-black border-2 border-black hover:bg-neo-cyan-hover hover:shadow-[2px_2px_0px_0px] hover:shadow-neo-shadow active:bg-neo-cyan-active rounded-full font-bold transition-all duration-150",
         "neo-outline": "bg-transparent text-foreground border-2 border-foreground hover:bg-foreground hover:text-background hover:shadow-[2px_2px_0px_0px] hover:shadow-foreground rounded-full font-bold transition-all duration-150",
-        bracket: "h-[56px] px-12 text-[16px] font-black font-mono tracking-[0.2em] border border-foreground bg-foreground text-background hover:bg-background hover:text-foreground transition-none uppercase shadow-[4px_4px_0_0_hsl(var(--foreground))] hover:shadow-[2px_2px_0_0_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px]",
-        "bracket-outline": "h-[56px] px-10 text-[16px] font-bold font-mono tracking-[0.2em] border border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-none uppercase shadow-[4px_4px_0_0_hsl(var(--foreground))] hover:shadow-[2px_2px_0_0_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px]",
       },
       size: {
         default: "h-10 px-4 py-2",
