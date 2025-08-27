@@ -52,6 +52,10 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				'neo-cyan': 'hsl(var(--neo-cyan))',
+				'neo-cyan-hover': 'hsl(var(--neo-cyan-hover))',
+				'neo-cyan-active': 'hsl(var(--neo-cyan-active))',
+				'neo-shadow': 'hsl(var(--neo-shadow))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
