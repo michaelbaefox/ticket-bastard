@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
+import QrScanner from 'qr-scanner';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Zap, FlipHorizontal, Edit3, Copy } from 'lucide-react';
@@ -39,108 +39,16 @@ async function verifyTicket(payload: string): Promise<ScanResult> {
 const Venue = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isTorchOn, setIsTorchOn] = useState(false);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [currentBanner, setCurrentBanner] = useState<ScanResult | null>(null);
   const [auditLog, setAuditLog] = useState<ScanResult[]>([]);
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualInput, setManualInput] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [currentDeviceId, setCurrentDeviceId] = useState<string>('');
+  const [cameras, setCameras] = useState<QrScanner.Camera[]>([]);
+  const [selectedCameraId, setSelectedCameraId] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
-  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const qrScannerRef = useRef<QrScanner | null>(null);
   const lastScannedRef = useRef<{ payload: string; timestamp: number } | null>(null);
-
-  // Initialize camera and scanner
-  useEffect(() => {
-    const initScanner = async () => {
-      try {
-        // Get available devices
-        const videoDevices = await navigator.mediaDevices.enumerateDevices();
-        const cameras = videoDevices.filter(device => device.kind === 'videoinput');
-        setDevices(cameras);
-        
-        if (cameras.length > 0) {
-          const preferredCamera = cameras.find(camera => 
-            camera.label.toLowerCase().includes('back') || 
-            camera.label.toLowerCase().includes('rear')
-          ) || cameras[0];
-          setCurrentDeviceId(preferredCamera.deviceId);
-        }
-
-        // Initialize code reader
-        codeReaderRef.current = new BrowserMultiFormatReader();
-      } catch (error) {
-        console.error('Failed to initialize scanner:', error);
-      }
-    };
-
-    initScanner();
-
-    return () => {
-      // Cleanup
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  // Start scanning
-  const startScanning = useCallback(async () => {
-    if (!codeReaderRef.current || !videoRef.current) return;
-
-    try {
-      const deviceId = currentDeviceId || undefined;
-      
-      await codeReaderRef.current.decodeFromVideoDevice(
-        deviceId,
-        videoRef.current,
-        (result, error) => {
-          if (result) {
-            handleScan(result.getText());
-          }
-        }
-      );
-      
-      setIsScanning(true);
-      
-      // Get the stream for torch control
-      const constraints = {
-        video: { deviceId: deviceId ? { exact: deviceId } : undefined }
-      };
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(mediaStream);
-      
-    } catch (error) {
-      console.error('Failed to start scanning:', error);
-    }
-  }, [currentDeviceId]);
-
-  // Stop scanning
-  const stopScanning = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-    setIsScanning(false);
-  }, [stream]);
-
-  // Toggle scanning
-  useEffect(() => {
-    if (isScanning) {
-      startScanning();
-    } else {
-      stopScanning();
-    }
-  }, [isScanning, startScanning, stopScanning]);
-
-  // Auto-start scanning
-  useEffect(() => {
-    if (currentDeviceId && !isScanning) {
-      setIsScanning(true);
-    }
-  }, [currentDeviceId]);
 
   const handleScan = useCallback(async (result: string) => {
     // Debounce duplicate scans
@@ -174,40 +82,129 @@ const Venue = () => {
     }
   }, []);
 
-  // Toggle torch
-  const toggleTorch = useCallback(async () => {
-    if (!stream) return;
-    
-    const track = stream.getVideoTracks()[0];
-    if (!track) return;
+  // Initialize scanner and get cameras
+  useEffect(() => {
+    const initScanner = async () => {
+      try {
+        // Check if camera is supported
+        const hasCamera = await QrScanner.hasCamera();
+        if (!hasCamera) {
+          console.error('No camera available');
+          return;
+        }
+
+        // Get available cameras
+        const cameraList = await QrScanner.listCameras(true);
+        setCameras(cameraList);
+        
+        // Set preferred camera (back camera if available)
+        const backCamera = cameraList.find(camera => 
+          camera.label.toLowerCase().includes('back') || 
+          camera.label.toLowerCase().includes('rear') ||
+          camera.label.toLowerCase().includes('environment')
+        );
+        const preferredCamera = backCamera || cameraList[0];
+        if (preferredCamera) {
+          setSelectedCameraId(preferredCamera.id);
+        }
+      } catch (error) {
+        console.error('Failed to initialize scanner:', error);
+      }
+    };
+
+    initScanner();
+  }, []);
+
+  // Initialize QR Scanner when video element and camera are ready
+  useEffect(() => {
+    if (!videoRef.current || !selectedCameraId) return;
+
+    const initQrScanner = () => {
+      qrScannerRef.current = new QrScanner(
+        videoRef.current!,
+        (result) => handleScan(result.data),
+        {
+          onDecodeError: (error) => {
+            // Silent - don't log decode errors as they're expected during scanning
+          },
+          highlightScanRegion: false,
+          highlightCodeOutline: false,
+          maxScansPerSecond: 5,
+        }
+      );
+    };
+
+    initQrScanner();
+
+    return () => {
+      if (qrScannerRef.current) {
+        qrScannerRef.current.destroy();
+      }
+    };
+  }, [selectedCameraId]);
+
+  // Start scanning
+  const startScanning = useCallback(async () => {
+    if (!qrScannerRef.current) return;
     
     try {
-      const capabilities = track.getCapabilities();
-      if ('torch' in capabilities) {
-        await track.applyConstraints({
-          advanced: [{ torch: !isTorchOn } as any]
-        });
-        setIsTorchOn(!isTorchOn);
+      await qrScannerRef.current.start();
+      if (selectedCameraId) {
+        await qrScannerRef.current.setCamera(selectedCameraId);
       }
+      setIsScanning(true);
+    } catch (error) {
+      console.error('Failed to start scanner:', error);
+    }
+  }, [selectedCameraId]);
+
+  // Stop scanning
+  const stopScanning = useCallback(async () => {
+    if (qrScannerRef.current) {
+      qrScannerRef.current.stop();
+    }
+    setIsScanning(false);
+  }, []);
+
+  // Auto-start scanning when camera is ready
+  useEffect(() => {
+    if (selectedCameraId && !isScanning && qrScannerRef.current) {
+      startScanning();
+    }
+  }, [selectedCameraId, startScanning]);
+
+
+  // Toggle torch
+  const toggleTorch = useCallback(async () => {
+    if (!qrScannerRef.current) return;
+    
+    try {
+      if (isTorchOn) {
+        await qrScannerRef.current.turnFlashOff();
+      } else {
+        await qrScannerRef.current.turnFlashOn();
+      }
+      setIsTorchOn(!isTorchOn);
     } catch (error) {
       console.error('Torch toggle failed:', error);
     }
-  }, [stream, isTorchOn]);
+  }, [isTorchOn]);
 
   // Flip camera
-  const flipCamera = useCallback(() => {
-    if (devices.length > 1) {
-      const currentIndex = devices.findIndex(device => device.deviceId === currentDeviceId);
-      const nextIndex = (currentIndex + 1) % devices.length;
-      setCurrentDeviceId(devices[nextIndex].deviceId);
+  const flipCamera = useCallback(async () => {
+    if (cameras.length > 1 && qrScannerRef.current) {
+      const currentIndex = cameras.findIndex(camera => camera.id === selectedCameraId);
+      const nextIndex = (currentIndex + 1) % cameras.length;
+      const nextCamera = cameras[nextIndex];
       
-      // Restart scanning with new device
-      if (isScanning) {
-        setIsScanning(false);
-        setTimeout(() => setIsScanning(true), 100);
+      try {
+        await qrScannerRef.current.setCamera(nextCamera.id);
+        setSelectedCameraId(nextCamera.id);
+      } catch (error) {
+        console.error('Camera flip failed:', error);
       }
     }
-  }, [devices, currentDeviceId, isScanning]);
+  }, [cameras, selectedCameraId]);
 
   const handleManualVerify = async () => {
     if (!manualInput.trim()) return;
@@ -284,7 +281,7 @@ const Venue = () => {
                 onClick={toggleTorch}
                 aria-label="Toggle torch"
                 className="text-xs font-mono uppercase px-2 py-1"
-                disabled={!stream}
+                disabled={!qrScannerRef.current}
               >
                 <Zap className="w-3 h-3" />
                 TORCH
@@ -295,7 +292,7 @@ const Venue = () => {
                 onClick={flipCamera}
                 aria-label="Flip camera"
                 className="text-xs font-mono uppercase px-2 py-1"
-                disabled={devices.length <= 1}
+                disabled={cameras.length <= 1}
               >
                 <FlipHorizontal className="w-3 h-3" />
                 FLIP
