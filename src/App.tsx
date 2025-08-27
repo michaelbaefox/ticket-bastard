@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
 import { Button } from './components/ui/button'
+import { Toaster as ShadcnToaster } from './components/ui/toaster'
 import React, { useState } from 'react'
 
 export default function App({ children }: { children: React.ReactNode }) {
@@ -148,6 +149,7 @@ export default function App({ children }: { children: React.ReactNode }) {
           padding: '12px'
         },
       }} />
+      <ShadcnToaster />
     </div>
   )
 }
