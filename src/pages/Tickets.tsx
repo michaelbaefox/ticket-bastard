@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
+import { useTickets } from '@/hooks/useLocalStorage'
+import { useFocusManagement, useAnnouncements } from '@/hooks/useAccessibility'
 
 interface Ticket {
   id: string
@@ -399,7 +401,7 @@ const TicketSkeleton: React.FC = () => (
 
 // Main Tickets Page Component
 const Tickets = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [persistedTickets, setPersistedTickets] = useTickets()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [transferModal, setTransferModal] = useState<{isOpen: boolean; ticket: Ticket | null}>({
@@ -419,18 +421,20 @@ const Tickets = () => {
     ticket: null
   })
   const { toast } = useToast()
+  const { focusRef, setFocus } = useFocusManagement()
+  const { announce } = useAnnouncements()
+  
+  // Combine mock and persisted tickets
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  
+  useEffect(() => {
+    const combinedTickets = [...mockTickets, ...persistedTickets]
+    setTickets(combinedTickets)
+  }, [persistedTickets])
 
   useEffect(() => {
-    // Load tickets from localStorage and mock data
-    const loadTickets = () => {
-      const storedTickets = JSON.parse(localStorage.getItem('ticketBastardTickets') || '[]')
-      const combinedTickets = [...mockTickets, ...storedTickets]
-      setTickets(combinedTickets)
-      setIsLoading(false)
-    }
-
     // Simulate loading
-    const timer = setTimeout(loadTickets, 1000)
+    const timer = setTimeout(() => setIsLoading(false), 1000)
     return () => clearTimeout(timer)
   }, [])
 
@@ -446,14 +450,14 @@ const Tickets = () => {
         : t
     ))
     
-    // Update localStorage
-    const updatedTickets = tickets.map(t => 
+    // Update persisted tickets only (not mock data)
+    setPersistedTickets(prev => prev.map(t => 
       t.id === ticket.id 
         ? { ...t, status: 'REDEEMED' as const }
         : t
-    )
-    localStorage.setItem('ticketBastardTickets', JSON.stringify(updatedTickets.filter(t => !mockTickets.find(m => m.id === t.id))))
+    ))
     
+    announce(`${ticket.eventName} ticket has been redeemed`)
     toast({
       title: "Ticket Redeemed",
       description: `${ticket.eventName} ticket has been redeemed`
@@ -494,9 +498,8 @@ const Tickets = () => {
     // Remove ticket from current user's wallet
     setTickets(prev => prev.filter(t => t.id !== transferModal.ticket!.id))
     
-    // Update localStorage
-    const updatedTickets = tickets.filter(t => t.id !== transferModal.ticket!.id)
-    localStorage.setItem('ticketBastardTickets', JSON.stringify(updatedTickets.filter(t => !mockTickets.find(m => m.id === t.id))))
+    // Update persisted tickets only (not mock data)
+    setPersistedTickets(prev => prev.filter(t => t.id !== transferModal.ticket!.id))
     
     toast({
       title: "Ticket Transferred",

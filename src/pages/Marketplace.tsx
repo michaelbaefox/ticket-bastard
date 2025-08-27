@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
+import { useTickets } from '@/hooks/useLocalStorage'
+import { useFocusManagement, useKeyboardNavigation, useAnnouncements } from '@/hooks/useAccessibility'
 
 // Mock data for listings
 const mockListings = [
@@ -66,6 +68,9 @@ export default function Marketplace() {
   const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
   const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
   const { toast } = useToast()
+  const [tickets, setTickets] = useTickets()
+  const { setFocus } = useFocusManagement()
+  const { announce } = useAnnouncements()
 
   // Simulate loading
   useEffect(() => {
@@ -96,19 +101,21 @@ export default function Marketplace() {
   }
 
   const handlePurchaseConfirm = (ticketData: any) => {
-    // Add to localStorage for persistence
-    const existingTickets = JSON.parse(localStorage.getItem('ticketBastardTickets') || '[]')
-    existingTickets.push(ticketData)
-    localStorage.setItem('ticketBastardTickets', JSON.stringify(existingTickets))
+    // Add to persistent storage
+    setTickets(prev => [...prev, ticketData])
     
     const msg = footerMessages[Math.floor(Math.random() * footerMessages.length)]
     setFooterFlash(msg)
     setTimeout(() => setFooterFlash(null), 1600)
     
+    announce(`Ticket purchased for ${ticketData.eventName}`)
     toast({
       title: "Purchased",
       description: `Ticket added to your wallet`,
     })
+    
+    // Focus management after modal closes
+    setTimeout(() => setFocus(), 100)
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -138,26 +145,32 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen">
       <ScanlineOverlay />
+      
+      {/* Skip Link for Screen Readers */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
 
       <div className="max-w-[1280px] mx-auto px-4 py-8">
         {/* Page Header */}
-        <div className="mb-8">
+        <header className="mb-8">
           <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase mb-6">MARKETPLACE</h1>
-        </div>
+        </header>
         
         {/* Toolbar */}
-        <div className="mb-8">
+        <section className="mb-8" aria-label="Search and filter controls">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             {/* Search */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-md">
+            <form onSubmit={handleSearch} className="flex-1 max-w-md" role="search">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" aria-hidden="true" />
                 <Input
                   type="text"
                   placeholder="SEARCH EVENTS..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 font-mono uppercase placeholder:text-white/40 bg-transparent border-white/25 focus:border-white focus:ring-white text-white"
+                  aria-label="Search events"
                 />
               </div>
             </form>
@@ -216,30 +229,31 @@ export default function Marketplace() {
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Results Summary */}
         <div className="mb-6">
           <p className="text-sm font-mono text-white/60" role="status" aria-live="polite">
-            {isLoading ? 'Loading listings...' : `${sortedListings.length} results`}
+            {isLoading ? 'Loading listings...' : `${sortedListings.length} ${sortedListings.length === 1 ? 'result' : 'results'} found`}
           </p>
         </div>
 
         {/* Listings */}
-        {isLoading ? (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="bg-transparent border-white/10">
-                <CardContent className="p-4">
-                  <Skeleton className="h-6 w-3/4 mb-4 bg-white/10" />
-                  <Skeleton className="h-4 w-1/2 mb-2 bg-white/10" />
-                  <Skeleton className="h-4 w-2/3 mb-2 bg-white/10" />
-                  <Skeleton className="h-4 w-1/3 mb-4 bg-white/10" />
-                  <Skeleton className="h-10 w-full bg-white/10" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <main id="main-content" role="main">
+          {isLoading ? (
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} aria-label="Loading listings">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-transparent border-white/10">
+                  <CardContent className="p-4">
+                    <Skeleton className="h-6 w-3/4 mb-4 bg-white/10" />
+                    <Skeleton className="h-4 w-1/2 mb-2 bg-white/10" />
+                    <Skeleton className="h-4 w-2/3 mb-2 bg-white/10" />
+                    <Skeleton className="h-4 w-1/3 mb-4 bg-white/10" />
+                    <Skeleton className="h-10 w-full bg-white/10" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
         ) : sortedListings.length === 0 ? (
           <div className="text-center py-16">
             <Card className="bg-transparent border-white/20 max-w-md mx-auto">
@@ -254,12 +268,12 @@ export default function Marketplace() {
               </CardContent>
             </Card>
           </div>
-        ) : (
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-            {sortedListings.map((listing) => (
-              <Card key={listing.id} className="bg-transparent border-white/20 hover:border-white/30 transition-colors">
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-white mb-3">{listing.eventName}</h3>
+          ) : (
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} role="list" aria-label="Event listings">
+              {sortedListings.map((listing, index) => (
+                <Card key={listing.id} className="bg-transparent border-white/20 hover:border-white/30 transition-colors focus-within:border-white" role="listitem">
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-white mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
                   
                   <div className="space-y-2 mb-4 text-sm">
                     <div className="text-white/70">
@@ -311,6 +325,7 @@ export default function Marketplace() {
                         onClick={() => handleBuyTicket(listing)}
                         className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] transition-all"
                         aria-label={`Buy ticket for ${listing.eventName}`}
+                        aria-describedby={`listing-${listing.id}`}
                       >
                         [ BUY TICKET ]
                       </Button>
@@ -321,30 +336,32 @@ export default function Marketplace() {
                         className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
                         aria-label={`Leave feedback for ${listing.eventName}`}
                       >
-                        <MessageCircle className="w-4 h-4" />
+                        <MessageCircle className="w-4 h-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </main>
 
         {/* Pagination */}
         {!isLoading && sortedListings.length > 0 && (
-          <div className="mt-12 flex items-center justify-center gap-4">
+          <nav className="mt-12 flex items-center justify-center gap-4" aria-label="Pagination navigation">
             <Button
               variant="outline"
               size="sm"
               disabled={currentPage === 1}
               className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white disabled:opacity-30"
+              aria-label="Go to previous page"
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
+              <ChevronLeft className="w-4 h-4 mr-1" aria-hidden="true" />
               PREV
             </Button>
             
-            <span className="font-mono text-sm text-white/70 px-4">
+            <span className="font-mono text-sm text-white/70 px-4" aria-current="page">
               PAGE {currentPage}
             </span>
             
@@ -352,11 +369,12 @@ export default function Marketplace() {
               variant="outline"
               size="sm"
               className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
+              aria-label="Go to next page"
             >
               NEXT
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-4 h-4 ml-1" aria-hidden="true" />
             </Button>
-          </div>
+          </nav>
         )}
 
         {/* Footer Flash Message */}
@@ -382,7 +400,10 @@ export default function Marketplace() {
       {feedbackModal.listing && (
         <FeedbackModal
           isOpen={feedbackModal.isOpen}
-          onClose={() => setFeedbackModal({isOpen: false, listing: null})}
+          onClose={() => {
+            setFeedbackModal({isOpen: false, listing: null})
+            setFocus()
+          }}
           eventName={feedbackModal.listing.eventName}
           eventId={feedbackModal.listing.id?.toString() || ''}
         />

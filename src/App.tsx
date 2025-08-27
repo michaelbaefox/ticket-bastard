@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Toaster as ShadcnToaster } from './components/ui/toaster'
+import { AccessibilityProvider } from './components/AccessibilityProvider'
 
 export default function App({ children }: { children: React.ReactNode }) {
   const [pathname, setPathname] = useState(window.location.pathname)
@@ -49,108 +50,119 @@ export default function App({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background text-text-primary flex flex-col">
-      {!isHome && (
-        <header className="sticky top-0 z-50 bg-surface-dark border-b border-border py-4">
-          <div className="mx-auto px-4 max-w-[1000px]">
-            <div className="flex justify-between items-center gap-4">
-              <Link to="/" className="flex items-center space-x-3 group" aria-label="Home">
-                <img src="/ticketbastard-logo.svg" alt="TicketBastard" className="block w-auto shrink-0" style={{ height: '48px', paddingTop: '8px', paddingBottom: '8px' }} />
-              </Link>
+    <AccessibilityProvider>
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        {!isHome && (
+          <header className="sticky top-0 z-50 bg-card border-b border-border py-4">
+            <div className="mx-auto px-4 max-w-[1000px]">
+              <div className="flex justify-between items-center gap-4">
+                <Link to="/" className="flex items-center space-x-3 group" aria-label="TicketBastard Home">
+                  <img src="/ticketbastard-logo.svg" alt="TicketBastard" className="block w-auto shrink-0" style={{ height: '48px', paddingTop: '8px', paddingBottom: '8px' }} />
+                </Link>
 
-              {/* Desktop Navigation */}
-              {isDesktop && (
-                <nav className="flex items-center text-text-secondary">
-                  {navItems.map((item, index) => {
-                    const isActive = pathname === item.path
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setPathname(item.path)}
-                        className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark ${
-                          isActive
-                            ? 'text-text-primary underline underline-offset-8 decoration-2'
-                            : 'text-text-secondary hover:text-text-primary hover:underline underline-offset-8'
-                        }`}
-                        style={{
-                          textDecorationColor: isActive ? '#ff85c5' : undefined,
-                          marginRight: index < navItems.length - 1 ? '48px' : '0'
-                        }}
-                        aria-current={isActive ? 'page' : undefined}
-                      >
-                        <span>{item.label}</span>
-                      </Link>
-                    )
-                  })}
-                </nav>
-              )}
-
-              <div className="flex items-center gap-4">
-                {!isDesktop && (
-                  <div>
-                    <Button onClick={() => setIsMenuOpen(!isMenuOpen)} variant="ghost" size="sm" className="p-2">
-                      {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                    </Button>
-                  </div>
+                {/* Desktop Navigation */}
+                {isDesktop && (
+                  <nav className="flex items-center text-muted-foreground" role="navigation" aria-label="Main navigation">
+                    {navItems.map((item, index) => {
+                      const isActive = pathname === item.path
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setPathname(item.path)}
+                          className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                            isActive
+                              ? 'text-foreground underline underline-offset-8 decoration-2'
+                              : 'text-muted-foreground hover:text-foreground hover:underline underline-offset-8'
+                          }`}
+                          style={{
+                            textDecorationColor: isActive ? 'hsl(var(--primary))' : undefined,
+                            marginRight: index < navItems.length - 1 ? '48px' : '0'
+                          }}
+                          aria-current={isActive ? 'page' : undefined}
+                        >
+                          <span>{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </nav>
                 )}
+
+                <div className="flex items-center gap-4">
+                  {!isDesktop && (
+                    <div>
+                      <Button 
+                        onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                        variant="ghost" 
+                        size="sm" 
+                        className="p-2"
+                        aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={isMenuOpen}
+                        aria-controls="mobile-menu"
+                      >
+                        {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </header>
-      )}
+          </header>
+        )}
 
-      {/* Mobile Menu */}
-      {!isHome && isMenuOpen && (
-        <div className={`fixed inset-0 z-40 bg-surface-dark md:hidden`}>
-          <nav className="flex flex-col items-start p-8 mt-16 space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.path
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => { setPathname(item.path); setIsMenuOpen(false) }}
-                  className={`flex items-center w-full gap-3 text-lg font-semibold p-3 ${
-                    isActive ? 'text-text-primary underline underline-offset-8' : 'text-text-secondary hover:text-text-primary hover:underline underline-offset-8'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.label}
-                </Link>
-              )
-            })}
-            <div className="border-t border-border w-full my-4" />
-            <Button variant="ghost" size="lg" className="w-full">
-              <Wallet className="w-5 h-5" />
-              <span>Connect Wallet</span>
-            </Button>
-          </nav>
-        </div>
-      )}
-
-      <main className="relative flex-grow">
-        {isHome ? (
-          <div className="animate-fade-in">{children}</div>
-        ) : (
-          <div className="mx-auto px-4 py-10 max-w-[1280px]">
-            <div className="animate-fade-in">{children}</div>
+        {/* Mobile Menu */}
+        {!isHome && isMenuOpen && (
+          <div className={`fixed inset-0 z-40 bg-card md:hidden`} id="mobile-menu">
+            <nav className="flex flex-col items-start p-8 mt-16 space-y-2" role="navigation" aria-label="Mobile navigation">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.path
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => { setPathname(item.path); setIsMenuOpen(false) }}
+                    className={`flex items-center w-full gap-3 text-lg font-semibold p-3 transition-colors ${
+                      isActive ? 'text-foreground underline underline-offset-8' : 'text-muted-foreground hover:text-foreground hover:underline underline-offset-8'
+                    }`}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <Icon className="w-5 h-5" aria-hidden="true" />
+                    {item.label}
+                  </Link>
+                )
+              })}
+              <div className="border-t border-border w-full my-4" />
+              <Button variant="ghost" size="lg" className="w-full">
+                <Wallet className="w-5 h-5" aria-hidden="true" />
+                <span>Connect Wallet</span>
+              </Button>
+            </nav>
           </div>
         )}
-      </main>
-      
-      <footer className="mt-auto border-t border-border">
-        <div className="mx-auto px-4 py-6 text-sm text-text-secondary flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1000px]">
-          <div>© {new Date().getFullYear()} TicketBastard. Fuck around and find out.</div>
-          <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-white">Docs</a>
-            <a href="#" className="hover:text-white">GitHub</a>
-          </div>
-        </div>
-      </footer>
 
-      <ShadcnToaster />
-    </div>
+        <main className="relative flex-grow" role="main">
+          {isHome ? (
+            <div className="animate-fade-in">{children}</div>
+          ) : (
+            <div className="mx-auto px-4 py-10 max-w-[1280px]">
+              <div className="animate-fade-in">{children}</div>
+            </div>
+          )}
+        </main>
+        
+        <footer className="mt-auto border-t border-border" role="contentinfo">
+          <div className="mx-auto px-4 py-6 text-sm text-muted-foreground flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1000px]">
+            <div>© {new Date().getFullYear()} TicketBastard. Fuck around and find out.</div>
+            <div className="flex items-center gap-4">
+              <a href="#" className="hover:text-foreground transition-colors">Docs</a>
+              <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
+            </div>
+          </div>
+        </footer>
+
+        <ShadcnToaster />
+      </div>
+    </AccessibilityProvider>
   )
 }

@@ -124,4 +124,46 @@ All colors MUST be HSL.
     --background: 0 0% 0%; /* Pure black fallback */
     --foreground: 0 0% 100%; /* Pure white text */
   }
+
+  /* Accessibility enhancements */
+  .high-contrast {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+  }
+
+  .reduce-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .large-text {
+    font-size: 1.125rem;
+  }
+
+  /* Focus improvements */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Skip link for screen readers */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 8px;
+    z-index: 9999;
+    text-decoration: none;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .skip-link:focus {
+    top: 6px;
+  }
 }
