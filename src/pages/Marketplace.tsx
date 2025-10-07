@@ -12,36 +12,146 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
 import { useTickets } from '@/hooks/useLocalStorage'
 import { useFocusManagement, useKeyboardNavigation, useAnnouncements } from '@/hooks/useAccessibility'
+import { TicketPolicy, TicketOnChain, StoredTicket, TicketLedgerEntry } from '@/types/ticketing'
+import { canonicalizePolicy, derivePolicySignature } from '@/lib/ticketing'
 
 // Mock data for listings
-const mockListings = [
+type MarketplaceListing = {
+  id: number
+  eventName: string
+  validFrom: string
+  validTo: string
+  sellerOutpoint: string
+  ticketOutpoint: string
+  priceInSats: number
+  seatLabel: string
+  policy: TicketPolicy
+  ticketTemplate: TicketOnChain
+  issuerSignature?: string
+}
+
+const policyA: TicketPolicy = {
+  resaleAllowed: true,
+  royaltyBps: 800,
+  royaltyRecipients: [
+    { id: 'artist', lockingScriptHex: '76a914ffeeddbb88ac', bps: 6000 },
+    { id: 'venue', lockingScriptHex: '76a914c0ffeeee88ac', bps: 4000 }
+  ],
+  primaryRecipients: [
+    { id: 'organizer', lockingScriptHex: '76a914abcdef0123456789abcdef012345678988ac', bps: 5000 },
+    { id: 'venue', lockingScriptHex: '76a914deadbeef0123456789deadbeef0123456788ac', bps: 3000 },
+    { id: 'protocol', lockingScriptHex: '76a914feedface0123456789feedface0123456788ac', bps: 2000 }
+  ],
+  version: '1',
+  issuerId: 'cryptopunk'
+}
+
+const policyAJson = canonicalizePolicy(policyA)
+const policyASignature = derivePolicySignature('evt_cryptopunk2024', 'tix_cryptopunk', policyAJson)
+
+const policyB: TicketPolicy = {
+  resaleAllowed: false,
+  royaltyBps: 0,
+  royaltyRecipients: [
+    { id: 'issuer', lockingScriptHex: '76a91400112233445566778899aabbccddeeff88ac', bps: 10000 }
+  ],
+  primaryRecipients: [
+    { id: 'collective', lockingScriptHex: '76a914cafebabecafebabecafebabecafebabe88ac', bps: 7000 },
+    { id: 'venue', lockingScriptHex: '76a914deadc0dedeadc0dedeadc0dedeadc0de88ac', bps: 3000 }
+  ],
+  version: '1',
+  issuerId: 'underground'
+}
+
+const policyBJson = canonicalizePolicy(policyB)
+const policyBSignature = derivePolicySignature('evt_underground', 'tix_underground', policyBJson)
+
+const policyC: TicketPolicy = {
+  resaleAllowed: true,
+  royaltyBps: 500,
+  royaltyRecipients: [
+    { id: 'curator', lockingScriptHex: '76a9141234123412341234123412341234123488ac', bps: 5000 },
+    { id: 'venue', lockingScriptHex: '76a914beadbeadbeadbeadbeadbeadbeadbead88ac', bps: 5000 }
+  ],
+  primaryRecipients: [
+    { id: 'market', lockingScriptHex: '76a914abbaabbaabbaabbaabbaabbaabbaabba88ac', bps: 6000 },
+    { id: 'artist', lockingScriptHex: '76a914ccddccddccddccddccddccddccddccdd88ac', bps: 2000 },
+    { id: 'protocol', lockingScriptHex: '76a914aa55aa55aa55aa55aa55aa55aa55aa5588ac', bps: 2000 }
+  ],
+  version: '1',
+  issuerId: 'neo_tokyo_market'
+}
+
+const policyCJson = canonicalizePolicy(policyC)
+const policyCSignature = derivePolicySignature('evt_neotokyo', 'tix_neotokyo', policyCJson)
+
+const mockListings: MarketplaceListing[] = [
   {
     id: 1,
-    eventName: "CRYPTO PUNK FESTIVAL 2024",
-    validFrom: "2024-03-15T18:00:00Z",
-    validTo: "2024-03-16T02:00:00Z",
-    sellerOutpoint: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    ticketOutpoint: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+    eventName: 'CRYPTO PUNK FESTIVAL 2024',
+    validFrom: '2024-03-15T18:00:00Z',
+    validTo: '2024-03-16T02:00:00Z',
+    sellerOutpoint: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    ticketOutpoint: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
     priceInSats: 50000,
+    seatLabel: 'General Admission',
+    policy: policyA,
+    ticketTemplate: {
+      protocolAddr: '1PushDropProtocolAddress',
+      eventId: 'evt_cryptopunk2024',
+      ticketId: 'tix_cryptopunk',
+      seatCiphertext: [12, 4, 210, 33],
+      validFromISO: '2024-03-15T18:00:00Z',
+      validToISO: '2024-03-16T02:00:00Z',
+      policyJson: policyAJson,
+      issuerSignature: policyASignature
+    },
+    issuerSignature: policyASignature
   },
   {
     id: 2,
-    eventName: "UNDERGROUND BASS COLLECTIVE",
-    validFrom: "2024-03-20T20:00:00Z",
-    validTo: "2024-03-21T04:00:00Z",
-    sellerOutpoint: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
-    ticketOutpoint: "tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw",
+    eventName: 'UNDERGROUND BASS COLLECTIVE',
+    validFrom: '2024-03-20T20:00:00Z',
+    validTo: '2024-03-21T04:00:00Z',
+    sellerOutpoint: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+    ticketOutpoint: 'tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw',
     priceInSats: 75000,
+    seatLabel: 'Front Row',
+    policy: policyB,
+    ticketTemplate: {
+      protocolAddr: '1PushDropProtocolAddress',
+      eventId: 'evt_underground',
+      ticketId: 'tix_underground',
+      seatCiphertext: [54, 99, 201],
+      validFromISO: '2024-03-20T20:00:00Z',
+      validToISO: '2024-03-21T04:00:00Z',
+      policyJson: policyBJson,
+      issuerSignature: policyBSignature
+    },
+    issuerSignature: policyBSignature
   },
   {
     id: 3,
-    eventName: "NEO-TOKYO NIGHT MARKET",
-    validFrom: "2024-03-25T19:00:00Z",
-    validTo: "2024-03-26T01:00:00Z",
-    sellerOutpoint: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-    ticketOutpoint: "tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx",
+    eventName: 'NEO-TOKYO NIGHT MARKET',
+    validFrom: '2024-03-25T19:00:00Z',
+    validTo: '2024-03-26T01:00:00Z',
+    sellerOutpoint: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+    ticketOutpoint: 'tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx',
     priceInSats: 125000,
-  },
+    seatLabel: 'Booth 42',
+    policy: policyC,
+    ticketTemplate: {
+      protocolAddr: '1PushDropProtocolAddress',
+      eventId: 'evt_neotokyo',
+      ticketId: 'tix_neotokyo',
+      seatCiphertext: [9, 81, 144, 201],
+      validFromISO: '2024-03-25T19:00:00Z',
+      validToISO: '2024-03-26T01:00:00Z',
+      policyJson: policyCJson,
+      issuerSignature: policyCSignature
+    },
+    issuerSignature: policyCSignature
+  }
 ]
 
 const footerMessages = [
@@ -65,7 +175,7 @@ export default function Marketplace() {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
   const [footerFlash, setFooterFlash] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
+  const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean; listing: MarketplaceListing | null}>({isOpen: false, listing: null})
   const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
   const { toast } = useToast()
   const [tickets, setTickets] = useTickets()
@@ -92,7 +202,7 @@ export default function Marketplace() {
     }
   }
 
-  const handleBuyTicket = (listing: any) => {
+  const handleBuyTicket = (listing: MarketplaceListing) => {
     setPurchaseModal({isOpen: true, listing})
   }
 
@@ -100,14 +210,31 @@ export default function Marketplace() {
     setFeedbackModal({isOpen: true, listing})
   }
 
-  const handlePurchaseConfirm = (ticketData: any) => {
+  const handlePurchaseConfirm = (ticketData: StoredTicket) => {
     // Add to persistent storage
     setTickets(prev => [...prev, ticketData])
-    
+
+    try {
+      const ledgerRaw = window.localStorage.getItem('ticketBastardLedger')
+      const ledger: TicketLedgerEntry[] = ledgerRaw ? JSON.parse(ledgerRaw) : []
+      ledger.push({
+        ticketId: ticketData.id,
+        eventId: ticketData.eventId,
+        outpoint: ticketData.outpoint,
+        tx: ticketData.lastTransferTx,
+        policy: ticketData.policy,
+        policyJson: ticketData.policyJson,
+        issuerSignature: ticketData.issuerSignature
+      })
+      window.localStorage.setItem('ticketBastardLedger', JSON.stringify(ledger))
+    } catch (error) {
+      console.error('Failed to persist ledger entry', error)
+    }
+
     const msg = footerMessages[Math.floor(Math.random() * footerMessages.length)]
     setFooterFlash(msg)
     setTimeout(() => setFooterFlash(null), 1600)
-    
+
     announce(`Ticket purchased for ${ticketData.eventName}`)
     toast({
       title: "Purchased",
@@ -394,6 +521,10 @@ export default function Marketplace() {
         onConfirm={handlePurchaseConfirm}
         eventName={purchaseModal.listing?.eventName || ''}
         priceInSats={purchaseModal.listing?.priceInSats || 0}
+        seatLabel={purchaseModal.listing?.seatLabel || 'General Admission'}
+        policy={purchaseModal.listing?.policy || policyA}
+        ticketTemplate={purchaseModal.listing?.ticketTemplate || mockListings[0].ticketTemplate}
+        issuerSignature={purchaseModal.listing?.issuerSignature}
       />
 
       {/* Feedback Modal */}

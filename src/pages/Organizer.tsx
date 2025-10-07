@@ -9,6 +9,9 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { toast } from '@/hooks/use-toast';
 import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Shuffle, Calendar, DollarSign } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
+import { TicketPolicy, RecipientShare } from '@/types/ticketing';
+import { canonicalizePolicy, derivePolicySignature } from '@/lib/ticketing';
 
 // Types
 type OrganizerEvent = {
@@ -25,6 +28,9 @@ type OrganizerEvent = {
   sold: number;
   redeemed: number;
   revenueSats: number;
+  policy: TicketPolicy;
+  policyJson: string;
+  issuerSignature?: string;
 };
 
 type OrganizerQuery = {
@@ -67,6 +73,42 @@ function getEventStatus(startsAtISO: string, endsAtISO: string): 'upcoming' | 'l
 }
 
 // Mock data
+const demoPolicyA: TicketPolicy = {
+  resaleAllowed: true,
+  royaltyBps: 750,
+  royaltyRecipients: [
+    { id: 'organizer', lockingScriptHex: '76a914c1a5cafe88ac', bps: 6000 },
+    { id: 'artist', lockingScriptHex: '76a914f00dbabe88ac', bps: 4000 }
+  ],
+  primaryRecipients: [
+    { id: 'organizer', lockingScriptHex: '76a914c1a5cafe88ac', bps: 5000 },
+    { id: 'venue', lockingScriptHex: '76a914deadbeef88ac', bps: 3000 },
+    { id: 'protocol', lockingScriptHex: '76a914feedface88ac', bps: 2000 }
+  ],
+  version: '1',
+  issuerId: 'btc_conf_issuer'
+};
+
+const demoPolicyAJson = canonicalizePolicy(demoPolicyA);
+const demoPolicyASignature = derivePolicySignature('evt_1234567890abcdef', 'template', demoPolicyAJson);
+
+const demoPolicyB: TicketPolicy = {
+  resaleAllowed: false,
+  royaltyBps: 0,
+  royaltyRecipients: [
+    { id: 'issuer', lockingScriptHex: '76a914facefeed88ac', bps: 10000 }
+  ],
+  primaryRecipients: [
+    { id: 'workshop', lockingScriptHex: '76a914f00dbabe88ac', bps: 7000 },
+    { id: 'venue', lockingScriptHex: '76a914deadbeef88ac', bps: 3000 }
+  ],
+  version: '1',
+  issuerId: 'ln_workshop_org'
+};
+
+const demoPolicyBJson = canonicalizePolicy(demoPolicyB);
+const demoPolicyBSignature = derivePolicySignature('evt_0987654321fedcba', 'template', demoPolicyBJson);
+
 const mockEvents: OrganizerEvent[] = [
   {
     eventId: "evt_1234567890abcdef",
@@ -81,7 +123,10 @@ const mockEvents: OrganizerEvent[] = [
     salesOpen: true,
     sold: 342,
     redeemed: 89,
-    revenueSats: 17100000
+    revenueSats: 17100000,
+    policy: demoPolicyA,
+    policyJson: demoPolicyAJson,
+    issuerSignature: demoPolicyASignature
   },
   {
     eventId: "evt_0987654321fedcba",
@@ -96,7 +141,10 @@ const mockEvents: OrganizerEvent[] = [
     salesOpen: false,
     sold: 100,
     redeemed: 100,
-    revenueSats: 2500000
+    revenueSats: 2500000,
+    policy: demoPolicyB,
+    policyJson: demoPolicyBJson,
+    issuerSignature: demoPolicyBSignature
   }
 ];
 
@@ -152,6 +200,21 @@ const eventFormSchema = z.object({
     .trim()
     .min(10, "Venue sink address is required")
     .refine((val) => bitcoinAddressRegex.test(val), { message: "Enter a valid Bitcoin address" }),
+  issuerId: z
+    .string()
+    .trim()
+    .min(3, "Issuer ID is required")
+    .max(120, "Issuer ID must be 120 characters or less"),
+  resaleAllowed: z.boolean(),
+  royaltyBps: z
+    .string()
+    .trim()
+    .min(1, "Royalty percent is required")
+    .refine((val) => /^\d+$/.test(val), { message: "Royalty must be whole number BPS" })
+    .refine((val) => {
+      const num = Number(val);
+      return num >= 0 && num <= 10000;
+    }, { message: "Royalty BPS must be between 0 and 10000" }),
 }).superRefine((data, ctx) => {
   const start = new Date(data.startsAt);
   const end = new Date(data.endsAt);
@@ -202,8 +265,21 @@ const eventFormDefaults: EventFormValues = {
   capacity: '',
   price: '',
   protocolAddr: '',
-  venueSink: ''
+  venueSink: '',
+  issuerId: '',
+  resaleAllowed: true,
+  royaltyBps: '0'
 };
+
+type RecipientFormRow = RecipientShare & { key: string };
+
+const defaultPrimaryRecipients: RecipientFormRow[] = [
+  { key: 'primary-0', lockingScriptHex: '', bps: 10000, id: 'organizer' }
+];
+
+const defaultRoyaltyRecipients: RecipientFormRow[] = [
+  { key: 'royalty-0', lockingScriptHex: '', bps: 10000, id: 'issuer' }
+];
 
 const Organizer = () => {
   const [events, setEvents] = useState<OrganizerEvent[]>(mockEvents);
@@ -214,6 +290,9 @@ const Organizer = () => {
   const [loading, setLoading] = useState(false);
   const [density, setDensity] = useState<'compact' | 'normal'>('normal');
   const [autoGenerateId, setAutoGenerateId] = useState(true);
+  const [primaryRecipients, setPrimaryRecipients] = useState<RecipientFormRow[]>(defaultPrimaryRecipients);
+  const [royaltyRecipients, setRoyaltyRecipients] = useState<RecipientFormRow[]>(defaultRoyaltyRecipients);
+  const [policyErrors, setPolicyErrors] = useState<{ primary?: string; royalty?: string }>({});
   const createEventForm = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: eventFormDefaults,
@@ -222,6 +301,49 @@ const Organizer = () => {
   const watchedEventName = createEventForm.watch('name');
   const watchedStartTime = createEventForm.watch('startsAt');
   const { isSubmitted } = createEventForm.formState;
+
+  const addRecipientRow = (type: 'primary' | 'royalty') => {
+    const key = `${type}-${Date.now()}`;
+    const newRow: RecipientFormRow = {
+      key,
+      id: `${type}-${(type === 'primary' ? primaryRecipients : royaltyRecipients).length}`,
+      lockingScriptHex: '',
+      bps: 0
+    };
+    if (type === 'primary') {
+      setPrimaryRecipients(prev => [...prev, newRow]);
+    } else {
+      setRoyaltyRecipients(prev => [...prev, newRow]);
+    }
+  };
+
+  const updateRecipientRow = (
+    type: 'primary' | 'royalty',
+    key: string,
+    field: 'id' | 'lockingScriptHex' | 'bps',
+    value: string
+  ) => {
+    const updater = (rows: RecipientFormRow[]) => rows.map((row) =>
+      row.key === key ? { ...row, [field]: field === 'bps' ? Number(value) : value } : row
+    );
+
+    if (type === 'primary') {
+      setPrimaryRecipients(updater);
+    } else {
+      setRoyaltyRecipients(updater);
+    }
+  };
+
+  const removeRecipientRow = (type: 'primary' | 'royalty', key: string) => {
+    if (type === 'primary') {
+      setPrimaryRecipients(prev => prev.filter(row => row.key !== key));
+    } else {
+      setRoyaltyRecipients(prev => prev.filter(row => row.key !== key));
+    }
+  };
+
+  const primaryTotalBps = primaryRecipients.reduce((sum, r) => sum + Number(r.bps || 0), 0);
+  const royaltyTotalBps = royaltyRecipients.reduce((sum, r) => sum + Number(r.bps || 0), 0);
 
   useEffect(() => {
     if (!autoGenerateId) return;
@@ -346,6 +468,43 @@ const Organizer = () => {
     const capacity = Number(values.capacity);
     const price = Number(values.price);
 
+    const sanitizeRecipients = (rows: RecipientFormRow[]): RecipientShare[] =>
+      rows.map((row) => ({
+        id: row.id?.trim() || undefined,
+        lockingScriptHex: row.lockingScriptHex.trim(),
+        bps: Number(row.bps)
+      }));
+
+    const sumPrimary = primaryRecipients.reduce((sum, r) => sum + Number(r.bps || 0), 0);
+    const sumRoyalty = royaltyRecipients.reduce((sum, r) => sum + Number(r.bps || 0), 0);
+
+    const newPolicyErrors: { primary?: string; royalty?: string } = {};
+    if (!primaryRecipients.length || sumPrimary !== 10000) {
+      newPolicyErrors.primary = 'Primary split must equal 10000 BPS';
+    }
+    if (!royaltyRecipients.length || sumRoyalty !== 10000) {
+      newPolicyErrors.royalty = 'Royalty split must equal 10000 BPS';
+    }
+
+    if (Object.keys(newPolicyErrors).length) {
+      setPolicyErrors(newPolicyErrors);
+      return;
+    }
+
+    setPolicyErrors({});
+
+    const policy: TicketPolicy = {
+      resaleAllowed: values.resaleAllowed,
+      royaltyBps: Number(values.royaltyBps),
+      royaltyRecipients: sanitizeRecipients(royaltyRecipients),
+      primaryRecipients: sanitizeRecipients(primaryRecipients),
+      version: '1',
+      issuerId: values.issuerId.trim()
+    };
+
+    const policyJson = canonicalizePolicy(policy);
+    const issuerSignature = derivePolicySignature(values.eventId.trim(), 'template', policyJson);
+
     const event: OrganizerEvent = {
       eventId: values.eventId.trim(),
       name: values.name.trim(),
@@ -359,7 +518,10 @@ const Organizer = () => {
       salesOpen: true,
       sold: 0,
       redeemed: 0,
-      revenueSats: 0
+      revenueSats: 0,
+      policy,
+      policyJson,
+      issuerSignature
     };
 
     setEvents(prev => [...prev, event]);
@@ -369,6 +531,8 @@ const Organizer = () => {
     });
     createEventForm.reset(eventFormDefaults);
     setAutoGenerateId(true);
+    setPrimaryRecipients(defaultPrimaryRecipients.map((row) => ({ ...row })));
+    setRoyaltyRecipients(defaultRoyaltyRecipients.map((row) => ({ ...row })));
   });
 
   const exportToCSV = () => {
@@ -799,6 +963,45 @@ const Organizer = () => {
                 </div>
               </div>
 
+              {/* Policy */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-lg">Ticket Policy</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="text-sm font-mono text-neo-contrast/80">
+                    <div>Resale: {selectedEvent.policy.resaleAllowed ? 'Allowed' : 'Disabled'}</div>
+                    <div>Royalty: {(selectedEvent.policy.royaltyBps / 100).toFixed(2)}%</div>
+                    <div>Issuer ID: {selectedEvent.policy.issuerId}</div>
+                  </div>
+                  <div className="text-xs font-mono text-neo-contrast/60 break-words">
+                    <div className="uppercase tracking-wide text-neo-contrast/50 mb-1">Policy JSON</div>
+                    {selectedEvent.policyJson}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-xs text-neo-contrast/50 uppercase font-mono mb-1">Primary Split</div>
+                    <div className="space-y-1">
+                      {selectedEvent.policy.primaryRecipients.map((recipient, idx) => (
+                        <div key={`${recipient.lockingScriptHex}-${idx}`} className="text-xs font-mono text-neo-contrast/80">
+                          {recipient.id ?? `Recipient ${idx + 1}`} • {recipient.bps / 100}% • {recipient.lockingScriptHex}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-neo-contrast/50 uppercase font-mono mb-1">Royalty Split</div>
+                    <div className="space-y-1">
+                      {selectedEvent.policy.royaltyRecipients.map((recipient, idx) => (
+                        <div key={`${recipient.lockingScriptHex}-${idx}`} className="text-xs font-mono text-neo-contrast/80">
+                          {recipient.id ?? `Recipient ${idx + 1}`} • {recipient.bps / 100}% • {recipient.lockingScriptHex}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Recent Activity */}
               <div className="space-y-2">
                 <div className="text-sm font-mono uppercase text-neo-contrast/60">Recent Activity</div>
@@ -856,6 +1059,9 @@ const Organizer = () => {
           if (!open) {
             createEventForm.reset(eventFormDefaults);
             setAutoGenerateId(true);
+            setPrimaryRecipients(defaultPrimaryRecipients.map((row) => ({ ...row })));
+            setRoyaltyRecipients(defaultRoyaltyRecipients.map((row) => ({ ...row })));
+            setPolicyErrors({});
           }
         }}
       >
@@ -1058,6 +1264,198 @@ const Organizer = () => {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={createEventForm.control}
+                name="issuerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Issuer ID *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="organizer-handle"
+                        className="font-mono"
+                      />
+                    </FormControl>
+                    <FormDescription>Human-readable identifier published with your policy.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={createEventForm.control}
+                  name="resaleAllowed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between gap-4">
+                        <FormLabel className="mb-0">Allow Resale</FormLabel>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(checked) => field.onChange(checked)}
+                        />
+                      </div>
+                      <FormDescription>Toggle off to make tickets non-transferable.</FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createEventForm.control}
+                  name="royaltyBps"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Royalty (BPS)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          inputMode="numeric"
+                          type="number"
+                          min={0}
+                          max={10000}
+                          placeholder="750"
+                          className="font-mono"
+                        />
+                      </FormControl>
+                      <FormDescription>Basis points applied on each resale (10000 = 100%).</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-6">
+                <div className="border border-white/10 rounded-md p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="font-semibold">Primary Sale Split</h4>
+                      <p className="text-xs text-white/60 font-mono">Distributes mint proceeds immediately.</p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="neo-outline"
+                      onClick={() => addRecipientRow('primary')}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Add recipient
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {primaryRecipients.map((recipient) => (
+                      <div key={recipient.key} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                        <div className="md:col-span-3">
+                          <label className="text-xs text-white/60">Identity Label</label>
+                          <Input
+                            value={recipient.id ?? ''}
+                            onChange={(e) => updateRecipientRow('primary', recipient.key, 'id', e.target.value)}
+                            placeholder="organizer"
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="md:col-span-6">
+                          <label className="text-xs text-white/60">Locking Script (hex)</label>
+                          <Input
+                            value={recipient.lockingScriptHex}
+                            onChange={(e) => updateRecipientRow('primary', recipient.key, 'lockingScriptHex', e.target.value)}
+                            placeholder="76a914...88ac"
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="text-xs text-white/60">BPS</label>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            value={recipient.bps}
+                            onChange={(e) => updateRecipientRow('primary', recipient.key, 'bps', e.target.value)}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="md:col-span-1 flex justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => removeRecipientRow('primary', recipient.key)}
+                            disabled={primaryRecipients.length === 1}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="text-xs font-mono text-white/60">Total: {primaryTotalBps} BPS</div>
+                    {policyErrors.primary && (
+                      <div className="text-xs text-red-400">{policyErrors.primary}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border border-white/10 rounded-md p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="font-semibold">Royalty Split</h4>
+                      <p className="text-xs text-white/60 font-mono">Paid automatically on each resale.</p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="neo-outline"
+                      onClick={() => addRecipientRow('royalty')}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Add recipient
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {royaltyRecipients.map((recipient) => (
+                      <div key={recipient.key} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                        <div className="md:col-span-3">
+                          <label className="text-xs text-white/60">Identity Label</label>
+                          <Input
+                            value={recipient.id ?? ''}
+                            onChange={(e) => updateRecipientRow('royalty', recipient.key, 'id', e.target.value)}
+                            placeholder="artist"
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="md:col-span-6">
+                          <label className="text-xs text-white/60">Locking Script (hex)</label>
+                          <Input
+                            value={recipient.lockingScriptHex}
+                            onChange={(e) => updateRecipientRow('royalty', recipient.key, 'lockingScriptHex', e.target.value)}
+                            placeholder="76a914...88ac"
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="text-xs text-white/60">BPS</label>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            value={recipient.bps}
+                            onChange={(e) => updateRecipientRow('royalty', recipient.key, 'bps', e.target.value)}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="md:col-span-1 flex justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => removeRecipientRow('royalty', recipient.key)}
+                            disabled={royaltyRecipients.length === 1}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="text-xs font-mono text-white/60">Total: {royaltyTotalBps} BPS</div>
+                    {policyErrors.royalty && (
+                      <div className="text-xs text-red-400">{policyErrors.royalty}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="flex flex-col-reverse gap-3 pt-4 md:flex-row md:gap-4">
                 <Button
