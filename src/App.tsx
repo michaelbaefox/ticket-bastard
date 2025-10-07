@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Toaster as ShadcnToaster } from './components/ui/toaster'
 import { AccessibilityProvider } from './components/AccessibilityProvider'
 
 export default function App({ children }: { children: React.ReactNode }) {
-  const [pathname, setPathname] = useState(window.location.pathname)
+  const location = useLocation()
+  const pathname = location.pathname
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   const isHome = pathname === '/'
@@ -20,10 +21,6 @@ export default function App({ children }: { children: React.ReactNode }) {
   ]
   
   useEffect(() => {
-    setIsMenuOpen(false)
-  }, [pathname])
-
-  useEffect(() => {
     const onResize = () => {
       const desktop = window.innerWidth >= 768
       setIsDesktop(desktop)
@@ -31,11 +28,8 @@ export default function App({ children }: { children: React.ReactNode }) {
     }
     onResize()
     window.addEventListener('resize', onResize)
-    const onPop = () => setPathname(window.location.pathname)
-    window.addEventListener('popstate', onPop)
     return () => {
       window.removeEventListener('resize', onResize)
-      window.removeEventListener('popstate', onPop)
     }
   }, [])
 
@@ -48,6 +42,10 @@ export default function App({ children }: { children: React.ReactNode }) {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
 
   return (
     <AccessibilityProvider>
@@ -69,8 +67,7 @@ export default function App({ children }: { children: React.ReactNode }) {
                         <Link
                           key={item.path}
                           to={item.path}
-                          onClick={() => setPathname(item.path)}
-                          className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-neo-contrast/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                          className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                             isActive
                               ? 'text-neo-contrast underline underline-offset-8 decoration-2'
                               : 'text-neo-contrast/70 hover:text-neo-contrast hover:underline underline-offset-8'
@@ -121,7 +118,7 @@ export default function App({ children }: { children: React.ReactNode }) {
                   <Link
                     key={item.path}
                     to={item.path}
-                    onClick={() => { setPathname(item.path); setIsMenuOpen(false) }}
+                    onClick={() => setIsMenuOpen(false)}
                     className={`flex items-center w-full gap-3 text-lg font-semibold p-3 transition-colors ${
                       isActive ? 'text-neo-contrast underline underline-offset-8' : 'text-neo-contrast/70 hover:text-neo-contrast hover:underline underline-offset-8'
                     }`}
