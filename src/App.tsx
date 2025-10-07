@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom'
 import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Toaster as ShadcnToaster } from './components/ui/toaster'
-import { AccessibilityProvider } from './components/AccessibilityProvider'
 import ticketbastardHomeButton from './assets/ticketbastard-home-button.svg'
 
 export default function App({ children }: { children: React.ReactNode }) {
@@ -71,8 +70,7 @@ export default function App({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AccessibilityProvider>
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
         <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-sm border-b border-white/10">
           <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 py-4">
             <div className="flex justify-between items-center gap-4 sm:gap-6">
@@ -204,6 +202,5 @@ export default function App({ children }: { children: React.ReactNode }) {
 
         <ShadcnToaster />
       </div>
-    </AccessibilityProvider>
   )
 }

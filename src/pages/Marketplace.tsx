@@ -47,7 +47,7 @@ const policyA: TicketPolicy = {
 }
 
 const policyAJson = canonicalizePolicy(policyA)
-const policyASignature = derivePolicySignature('evt_cryptopunk2024', 'tix_cryptopunk', policyAJson)
+const policyASignature = derivePolicySignature('evt_cryptopunk2026', 'tix_cryptopunk', policyAJson)
 
 const policyB: TicketPolicy = {
   resaleAllowed: false,
@@ -88,9 +88,9 @@ const policyCSignature = derivePolicySignature('evt_neotokyo', 'tix_neotokyo', p
 const mockListings: MarketplaceListing[] = [
   {
     id: 1,
-    eventName: 'CRYPTO PUNK FESTIVAL 2024',
-    validFrom: '2024-03-15T18:00:00Z',
-    validTo: '2024-03-16T02:00:00Z',
+    eventName: 'CRYPTO PUNK FESTIVAL 2026',
+    validFrom: '2026-03-15T18:00:00Z',
+    validTo: '2026-03-16T02:00:00Z',
     sellerOutpoint: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
     ticketOutpoint: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
     priceInSats: 50000,
@@ -98,11 +98,11 @@ const mockListings: MarketplaceListing[] = [
     policy: policyA,
     ticketTemplate: {
       protocolAddr: '1PushDropProtocolAddress',
-      eventId: 'evt_cryptopunk2024',
+      eventId: 'evt_cryptopunk2026',
       ticketId: 'tix_cryptopunk',
       seatCiphertext: [12, 4, 210, 33],
-      validFromISO: '2024-03-15T18:00:00Z',
-      validToISO: '2024-03-16T02:00:00Z',
+      validFromISO: '2026-03-15T18:00:00Z',
+      validToISO: '2026-03-16T02:00:00Z',
       policyJson: policyAJson,
       issuerSignature: policyASignature
     },
@@ -111,8 +111,8 @@ const mockListings: MarketplaceListing[] = [
   {
     id: 2,
     eventName: 'UNDERGROUND BASS COLLECTIVE',
-    validFrom: '2024-03-20T20:00:00Z',
-    validTo: '2024-03-21T04:00:00Z',
+    validFrom: '2026-03-20T20:00:00Z',
+    validTo: '2026-03-21T04:00:00Z',
     sellerOutpoint: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
     ticketOutpoint: 'tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw',
     priceInSats: 75000,
@@ -123,8 +123,8 @@ const mockListings: MarketplaceListing[] = [
       eventId: 'evt_underground',
       ticketId: 'tix_underground',
       seatCiphertext: [54, 99, 201],
-      validFromISO: '2024-03-20T20:00:00Z',
-      validToISO: '2024-03-21T04:00:00Z',
+      validFromISO: '2026-03-20T20:00:00Z',
+      validToISO: '2026-03-21T04:00:00Z',
       policyJson: policyBJson,
       issuerSignature: policyBSignature
     },
@@ -133,8 +133,8 @@ const mockListings: MarketplaceListing[] = [
   {
     id: 3,
     eventName: 'NEO-TOKYO NIGHT MARKET',
-    validFrom: '2024-03-25T19:00:00Z',
-    validTo: '2024-03-26T01:00:00Z',
+    validFrom: '2026-03-25T19:00:00Z',
+    validTo: '2026-03-26T01:00:00Z',
     sellerOutpoint: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
     ticketOutpoint: 'tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx',
     priceInSats: 125000,
@@ -145,8 +145,8 @@ const mockListings: MarketplaceListing[] = [
       eventId: 'evt_neotokyo',
       ticketId: 'tix_neotokyo',
       seatCiphertext: [9, 81, 144, 201],
-      validFromISO: '2024-03-25T19:00:00Z',
-      validToISO: '2024-03-26T01:00:00Z',
+      validFromISO: '2026-03-25T19:00:00Z',
+      validToISO: '2026-03-26T01:00:00Z',
       policyJson: policyCJson,
       issuerSignature: policyCSignature
     },

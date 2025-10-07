@@ -97,7 +97,7 @@ export default function HeroSection() {
 
             {/* CTAs */}
             <div className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:justify-start">
-              <Link to="/purchase" className="w-full sm:w-auto">
+              <Link to="/tickets" className="w-full sm:w-auto">
                 <button
                   className="w-full sm:w-auto h-[52px] sm:h-[56px] px-10 sm:px-12 text-sm sm:text-base font-black font-mono tracking-[0.2em] border border-neo-border bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast transition-none uppercase shadow-neo-lg hover:shadow-neo-md active:translate-x-[2px] active:translate-y-[2px]"
                   onMouseEnter={handleCtaHover}

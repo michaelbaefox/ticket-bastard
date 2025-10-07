@@ -30,28 +30,3 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 export function usePersistedState<T>(key: string, defaultValue: T) {
   return useLocalStorage(key, defaultValue)
 }
-
-// Specialized hooks for app data
-export function useTickets() {
-  return useLocalStorage('ticketBastardTickets', [])
-}
-
-export function useEvents() {
-  return useLocalStorage('ticketBastardEvents', [])
-}
-
-export function useFeedback() {
-  return useLocalStorage('ticketBastardFeedback', [])
-}
-
-export function useRefunds() {
-  return useLocalStorage('ticketBastardRefunds', [])
-}
-
-export function useTransfers() {
-  return useLocalStorage('ticketBastardTransfers', [])
-}
-
-export function useListings() {
-  return useLocalStorage('ticketBastardListings', [])
-}

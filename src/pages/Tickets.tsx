@@ -34,27 +34,27 @@ const basePolicy: TicketPolicy = {
 
 const basePolicyJson = canonicalizePolicy(basePolicy)
 const basePrimaryOutputs = buildPrimarySaleOutputs(50000, basePolicy)
-const baseSignature = derivePolicySignature('evt_cryptopunk2024', 'mock_ticket_1', basePolicyJson)
+const baseSignature = derivePolicySignature('evt_cryptopunk2026', 'mock_ticket_1', basePolicyJson)
 
 // Mock data for demonstration
 const mockTickets: StoredTicket[] = [
   {
     id: 'mock_ticket_1',
-    eventId: 'evt_cryptopunk2024',
-    eventName: 'CRYPTO PUNK FESTIVAL 2024',
+    eventId: 'evt_cryptopunk2026',
+    eventName: 'CRYPTO PUNK FESTIVAL 2026',
     seat: 'Section 1, Row A',
-    validFrom: '2024-03-15T18:00:00Z',
-    validTo: '2024-03-16T02:00:00Z',
+    validFrom: '2026-03-15T18:00:00Z',
+    validTo: '2026-03-16T02:00:00Z',
     outpoint: 'tx_mock_1:0',
     status: 'VALID',
     priceInSats: 50000,
     pushDropFields: [
       '1PushDropProtocolAddress',
-      'evt_cryptopunk2024',
+      'evt_cryptopunk2026',
       'mock_ticket_1',
       [12, 4, 210, 33],
-      '2024-03-15T18:00:00Z',
-      '2024-03-16T02:00:00Z',
+      '2026-03-15T18:00:00Z',
+      '2026-03-16T02:00:00Z',
       basePolicyJson,
       baseSignature
     ],
@@ -70,7 +70,7 @@ const mockTickets: StoredTicket[] = [
           ...basePrimaryOutputs
         ],
         type: 'primary',
-        timestampISO: '2024-01-01T00:00:00Z'
+        timestampISO: '2026-01-01T00:00:00Z'
       }
     ],
     lastTransferTx: {
@@ -81,7 +81,7 @@ const mockTickets: StoredTicket[] = [
         ...basePrimaryOutputs
       ],
       type: 'primary',
-      timestampISO: '2024-01-01T00:00:00Z'
+      timestampISO: '2026-01-01T00:00:00Z'
     }
   }
 ]
