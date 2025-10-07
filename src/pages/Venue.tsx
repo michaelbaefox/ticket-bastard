@@ -6,6 +6,8 @@ import { Zap, FlipHorizontal, Edit3, Copy, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScanlineOverlay } from '@/components/ScanlineOverlay';
+import { TicketLedgerEntry } from '@/types/ticketing';
+import { verifyRoyaltyCompliance, verifyPolicySignature } from '@/lib/ticketing';
 
 type ScanState = "VALID" | "ALREADY_USED" | "INVALID" | "ERROR";
 type ScanResult = { 
@@ -24,17 +26,65 @@ function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-// Mock verification function - replace with actual implementation
 async function verifyTicket(payload: string): Promise<ScanResult> {
-  await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
-  
-  const mockResults: ScanResult[] = [
-    { state: "VALID", outpoint: `${payload}:0`, ts: Date.now() },
-    { state: "ALREADY_USED", outpoint: `${payload}:0`, refTx: "abc123def456", ts: Date.now() },
-    { state: "INVALID", message: "Ticket not found", ts: Date.now() }
-  ];
-  
-  return mockResults[Math.floor(Math.random() * mockResults.length)];
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  try {
+    const ledgerRaw = window.localStorage.getItem('ticketBastardLedger');
+    const ledger: TicketLedgerEntry[] = ledgerRaw ? JSON.parse(ledgerRaw) : [];
+    const entry = ledger.find((record) => record.outpoint === payload);
+
+    if (!entry) {
+      return { state: "INVALID", message: "Ticket not recognized", ts: Date.now() };
+    }
+
+    const { policy, tx } = entry;
+    const eventId = entry.eventId;
+
+    if (policy.resaleAllowed === false && tx.type !== 'primary') {
+      return {
+        state: "INVALID",
+        message: "Resale disabled by issuer policy",
+        outpoint: payload,
+        ts: Date.now()
+      };
+    }
+
+    if (tx.type === 'resale' || tx.type === 'transfer') {
+      const compliance = verifyRoyaltyCompliance(tx, policy);
+      if (!compliance.compliant) {
+        return {
+          state: "INVALID",
+          message: "Royalty outputs missing on last transfer",
+          outpoint: payload,
+          ts: Date.now()
+        };
+      }
+    }
+
+    if (entry.issuerSignature && eventId) {
+      const signatureValid = verifyPolicySignature(eventId, entry.ticketId, entry.policyJson, entry.issuerSignature);
+      if (!signatureValid) {
+        return {
+          state: "INVALID",
+          message: "Policy signature mismatch",
+          outpoint: payload,
+          ts: Date.now()
+        };
+      }
+    }
+
+    return {
+      state: "VALID",
+      outpoint: payload,
+      refTx: tx.txid,
+      message: "Policy compliant",
+      ts: Date.now()
+    };
+  } catch (error) {
+    console.error('Verification error', error);
+    return { state: "ERROR", message: "Verification error. Retry.", ts: Date.now() };
+  }
 }
 
 const Venue = () => {
