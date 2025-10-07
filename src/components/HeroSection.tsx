@@ -7,6 +7,25 @@ export default function HeroSection() {
   const [ctaAlt, setCtaAlt] = React.useState(false)
   const [footerFlash, setFooterFlash] = React.useState<string | null>(null)
 
+  const handleScrollHintKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return
+    }
+
+    event.preventDefault()
+    handleScrollHintClick()
+  }
+
+  const handleScrollHintClick = () => {
+    const target = document.getElementById('how-it-works-section')
+
+    if (!target) {
+      return
+    }
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   React.useEffect(() => {
     const interval = setInterval(() => {
       setCtaAlt(prev => !prev)
@@ -36,38 +55,40 @@ export default function HeroSection() {
       </div>
 
       {/* Hero – two column layout */}
-      <section className="flex-1 flex items-center px-4 py-16">
-        <div className="w-full max-w-[1280px] mx-auto flex flex-row items-center gap-20">
+      <section className="flex-1 flex items-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="w-full max-w-[1280px] mx-auto flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-20">
           {/* Left: logo */}
-          <div className="basis-[41.6667%] shrink-0 relative overflow-hidden">
+          <div className="w-full max-w-xs sm:max-w-sm lg:max-w-none lg:basis-5/12 relative overflow-hidden flex justify-center">
             <div aria-hidden className="pointer-events-none absolute -inset-4 opacity-[0.18] blur-2xl" style={{ background: 'radial-gradient(circle at 40% 20%, rgba(229,75,140,0.24), rgba(99,102,241,0.14) 40%, transparent 60%)' }} />
             <img
               src={tbLogo}
               alt="TicketBastard — F*** the system. Scan the bastard."
-              className="relative z-10 w-full max-w-[480px] h-auto select-none drop-shadow-neo-glow"
+              className="relative z-10 w-full max-w-[420px] md:max-w-[480px] h-auto select-none drop-shadow-neo-glow"
               style={{ imageRendering: 'crisp-edges' }}
               draggable={false}
             />
           </div>
 
           {/* Right: info + CTAs */}
-          <div className="basis-[58.3333%]">
-            <div className="relative">
-              <h1 className="text-[40px] font-extrabold leading-[1.15] tracking-[-0.005em]">
+          <div className="w-full lg:basis-7/12 text-center lg:text-left">
+            <div className="relative space-y-4">
+              <h1 className="text-[32px] sm:text-[36px] md:text-[40px] font-extrabold leading-tight tracking-[-0.02em]">
                 F*** the system. <span className="text-neo-contrast/80">Own your tickets.</span>
               </h1>
-              <p className="mt-4 text-[16px] leading-[26px] text-neo-contrast/70 max-w-[55ch]">Plain, portable, verifiable. No vendor lock‑in. No middlemen.</p>
+              <p className="mx-auto lg:mx-0 text-base leading-relaxed text-neo-contrast/70 max-w-prose">
+                Plain, portable, verifiable. No vendor lock‑in. No middlemen.
+              </p>
 
-              <ul className="mt-5 space-y-3 text-sm text-neo-contrast/90">
-                <li className="flex items-start gap-3">
+              <ul className="mt-5 space-y-3 text-sm sm:text-base text-neo-contrast/90">
+                <li className="flex items-start justify-center gap-3 lg:justify-start">
                   <span className="mt-[6px] h-2 w-2 rounded-sm" style={{ backgroundColor: '#ff85c5' }} />
                   <span>On‑chain outputs. No middlemen.</span>
                 </li>
-                <li className="flex items-start gap-3">
+                <li className="flex items-start justify-center gap-3 lg:justify-start">
                   <span className="mt-[6px] h-2 w-2 rounded-sm bg-neo-contrast/70" />
                   <span>Encrypted seat. Your privacy.</span>
                 </li>
-                <li className="flex items-start gap-3">
+                <li className="flex items-start justify-center gap-3 lg:justify-start">
                   <span className="mt-[6px] h-2 w-2 rounded-sm bg-neo-contrast/70" />
                   <span>Built‑in resale. No scalpers.</span>
                 </li>
@@ -75,19 +96,19 @@ export default function HeroSection() {
             </div>
 
             {/* CTAs */}
-            <div className="mt-7 flex flex-col sm:flex-row gap-4">
-              <Link to="/purchase" className="block">
+            <div className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:justify-start">
+              <Link to="/purchase" className="w-full sm:w-auto">
                 <button
-                  className="w-full sm:w-auto h-[56px] px-12 text-[16px] font-black font-mono tracking-[0.2em] border border-neo-border bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast transition-none uppercase shadow-neo-lg hover:shadow-neo-md active:translate-x-[2px] active:translate-y-[2px]"
+                  className="w-full sm:w-auto h-[52px] sm:h-[56px] px-10 sm:px-12 text-sm sm:text-base font-black font-mono tracking-[0.2em] border border-neo-border bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast transition-none uppercase shadow-neo-lg hover:shadow-neo-md active:translate-x-[2px] active:translate-y-[2px]"
                   onMouseEnter={handleCtaHover}
                   aria-label="Get tickets"
                 >
                   {ctaAlt ? '[  BUY THE LIE  ]' : '[  GET TICKETS  ]'}
                 </button>
               </Link>
-              <Link to="/marketplace" className="block">
+              <Link to="/marketplace" className="w-full sm:w-auto">
                 <button
-                  className="w-full sm:w-auto h-[56px] px-10 text-[16px] font-bold font-mono tracking-[0.2em] border border-neo-border bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse transition-none uppercase shadow-neo-lg hover:shadow-neo-md active:translate-x-[2px] active:translate-y-[2px]"
+                  className="w-full sm:w-auto h-[52px] sm:h-[56px] px-8 sm:px-10 text-sm sm:text-base font-bold font-mono tracking-[0.2em] border border-neo-border bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse transition-none uppercase shadow-neo-lg hover:shadow-neo-md active:translate-x-[2px] active:translate-y-[2px]"
                   onMouseEnter={handleCtaHover}
                   aria-label="Sell a ticket"
                 >
@@ -106,7 +127,7 @@ export default function HeroSection() {
       </section>
 
       {/* Interstitial - Adult Swim style */}
-      <section className="py-8 px-4 text-center border-t border-neo-border/20 pt-12">
+      <section className="py-8 px-4 sm:px-6 lg:px-8 text-center border-t border-neo-border/20 pt-12">
         <p className="text-[11px] font-mono tracking-[0.45em] text-neo-contrast/60 mb-3">SYSTEM NOTICE</p>
         <p className="mx-auto max-w-2xl text-sm md:text-base leading-relaxed text-neo-contrast/70">
           This website is not a joke. Unless you think it is. Then it's definitely a joke. Either way: you need tickets.
@@ -114,9 +135,9 @@ export default function HeroSection() {
       </section>
 
       {/* Feature Strip */}
-      <section className="py-8 px-4">
+      <section className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-4 text-sm text-neo-contrast/60">
+          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-4 text-sm md:text-base text-neo-contrast/60">
             <span>Blockchain-native</span>
             <span className="text-neo-contrast/30 px-2">•</span>
             <span>End-to-end encrypted</span>
@@ -128,19 +149,27 @@ export default function HeroSection() {
 
       {/* Scroll hint */}
       <div className="py-8 flex justify-center">
-        <ArrowDown className="w-12 h-12 text-neo-contrast/80 animate-bounce hover:scale-110 cursor-pointer transition-transform" />
+        <button
+          type="button"
+          onClick={handleScrollHintClick}
+          onKeyDown={handleScrollHintKeyDown}
+          className="flex items-center justify-center rounded-full border border-neo-border/40 bg-transparent p-3 text-neo-contrast/80 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neo-contrast"
+          aria-label="Scroll to how it works section"
+        >
+          <ArrowDown className="w-10 h-10 sm:w-12 sm:h-12 animate-bounce" aria-hidden="true" />
+        </button>
       </div>
 
       {/* How it works */}
-      <section className="py-16 px-4">
+      <section id="how-it-works-section" className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl font-bold">How it works</h2>
-          <p className="mt-6 font-mono tracking-widest text-sm text-neo-contrast/80">BUY → HOLD → SCAN → REDEEM → RESELL</p>
+          <h2 className="text-2xl sm:text-3xl font-bold">How it works</h2>
+          <p className="mt-6 font-mono tracking-widest text-sm sm:text-base text-neo-contrast/80">BUY → HOLD → SCAN → REDEEM → RESELL</p>
 
           {/* Final CTA */}
-          <div className="mt-12 inline-block">
+          <div className="mt-10 sm:mt-12 inline-block">
             <Link to="/marketplace">
-              <button className="px-10 py-4 text-base font-bold font-mono tracking-widest border border-neo-border bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse transition-colors">
+              <button className="px-8 sm:px-10 py-3 sm:py-4 text-sm sm:text-base font-bold font-mono tracking-widest border border-neo-border bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse transition-colors">
                 Browse Marketplace
               </button>
             </Link>

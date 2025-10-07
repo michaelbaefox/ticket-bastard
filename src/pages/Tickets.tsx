@@ -699,7 +699,7 @@ const Tickets = () => {
     <div className="min-h-screen">
       <ScanlineOverlay />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase">MY TICKETS</h1>
           <Link

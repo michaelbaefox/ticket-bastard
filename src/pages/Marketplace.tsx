@@ -272,23 +272,18 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen">
       <ScanlineOverlay />
-      
-      {/* Skip Link for Screen Readers */}
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
 
-      <div className="max-w-[1280px] mx-auto px-4 py-8">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Page Header */}
         <header className="mb-8">
-          <h1 className="text-3xl font-bold font-mono tracking-wider text-neo-contrast uppercase mb-6">MARKETPLACE</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-mono tracking-wider text-neo-contrast uppercase mb-6">MARKETPLACE</h1>
         </header>
         
         {/* Toolbar */}
         <section className="mb-8" aria-label="Search and filter controls">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             {/* Search */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-md" role="search">
+            <form onSubmit={handleSearch} className="w-full lg:flex-1 max-w-md" role="search">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neo-contrast/40 w-4 h-4" aria-hidden="true" />
                 <Input

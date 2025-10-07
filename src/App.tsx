@@ -74,8 +74,8 @@ export default function App({ children }: { children: React.ReactNode }) {
     <AccessibilityProvider>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-sm border-b border-white/10">
-          <div className="mx-auto px-6 py-4 max-w-[1280px]">
-            <div className="flex justify-between items-center gap-6">
+          <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 py-4">
+            <div className="flex justify-between items-center gap-4 sm:gap-6">
               <div className="flex items-center min-h-[48px]">
                 {showHomeButton && (
                   <Link
@@ -182,18 +182,18 @@ export default function App({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <main className="relative flex-grow" role="main">
+        <main className="relative flex-grow w-full" role="main">
           {pathname === '/' ? (
             <div className="animate-fade-in">{children}</div>
           ) : (
-            <div className="mx-auto px-4 py-10 max-w-[1280px]">
+            <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
               <div className="animate-fade-in">{children}</div>
             </div>
           )}
         </main>
         
         <footer className="mt-auto border-t border-border" role="contentinfo">
-          <div className="mx-auto px-4 py-6 text-sm text-neo-contrast/60 flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1000px]">
+          <div className="mx-auto w-full max-w-[1000px] px-4 sm:px-6 py-6 text-sm text-neo-contrast/60 flex flex-col md:flex-row items-center justify-between gap-4">
             <div>© {new Date().getFullYear()} TicketBastard. F*** around and find out.</div>
             <div className="flex items-center gap-4">
               <a href="#" className="hover:text-neo-contrast transition-colors">Docs</a>

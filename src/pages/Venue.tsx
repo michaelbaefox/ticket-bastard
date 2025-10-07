@@ -320,7 +320,7 @@ const Venue = () => {
     <div className="min-h-screen bg-neo-contrast-inverse text-neo-contrast">
       <ScanlineOverlay />
       {/* Scanner Stage */}
-      <div className="relative flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="relative flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8 py-8">
         {/* Scanner Container */}
         <div className="relative w-full max-w-md aspect-square">
           {/* Controls Bar */}
@@ -424,7 +424,7 @@ const Venue = () => {
 
       {/* Audit Log */}
       {auditLog.length > 0 && (
-        <div className="max-w-4xl mx-auto px-4 pb-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <h2 className="text-lg font-bold mb-4 uppercase">RECENT SCANS</h2>
           <div className="space-y-2">
             {auditLog.map((result, index) => (
