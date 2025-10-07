@@ -69,22 +69,22 @@ const RefundModal = ({ isOpen, onClose, ticketId, eventName, priceSats }: Refund
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-white/20 max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 max-w-md">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-sm flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-yellow-500" />
             REFUND REQUEST
           </DialogTitle>
-          <div className="text-xs text-white/60 font-mono mt-1">{eventName}</div>
-          <div className="text-xs text-white/60 font-mono">Ticket: {ticketId.slice(0, 12)}...</div>
+          <div className="text-xs text-neo-contrast/60 font-mono mt-1">{eventName}</div>
+          <div className="text-xs text-neo-contrast/60 font-mono">Ticket: {ticketId.slice(0, 12)}...</div>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Refund Amount */}
-          <div className="p-3 border border-white/20 rounded-md bg-white/5">
-            <div className="text-sm font-mono text-white/60">REFUND AMOUNT</div>
+          <div className="p-3 border border-neo-border/20 rounded-md bg-neo-contrast/5">
+            <div className="text-sm font-mono text-neo-contrast/60">REFUND AMOUNT</div>
             <div className="text-lg font-bold font-mono">{priceSats.toLocaleString()} sats</div>
-            <div className="text-xs text-white/60">Processing fee may apply</div>
+            <div className="text-xs text-neo-contrast/60">Processing fee may apply</div>
           </div>
 
           {/* Reason */}
@@ -93,7 +93,7 @@ const RefundModal = ({ isOpen, onClose, ticketId, eventName, priceSats }: Refund
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value as any)}
-              className="w-full px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm"
+              className="w-full px-3 py-2 bg-neo-contrast-inverse border border-neo-border/20 rounded-md font-mono text-sm"
             >
               {Object.entries(reasonLabels).map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
@@ -111,15 +111,15 @@ const RefundModal = ({ isOpen, onClose, ticketId, eventName, priceSats }: Refund
               className="min-h-[100px] font-mono text-sm"
               maxLength={300}
             />
-            <div className="text-xs text-white/60 mt-1 font-mono">
+            <div className="text-xs text-neo-contrast/60 mt-1 font-mono">
               {description.length}/300 characters
             </div>
           </div>
 
           {/* Policy Notice */}
-          <div className="p-3 border border-white/20 rounded-md bg-yellow-500/10">
+          <div className="p-3 border border-neo-border/20 rounded-md bg-yellow-500/10">
             <div className="text-xs font-mono text-yellow-500">REFUND POLICY</div>
-            <div className="text-xs text-white/80 mt-1">
+            <div className="text-xs text-neo-contrast/80 mt-1">
               • Requests processed within 24 hours
               • Refunds sent to original payment method
               • 5% processing fee may apply

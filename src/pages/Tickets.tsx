@@ -127,17 +127,17 @@ const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ tic
   // Fullscreen presentation mode
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 z-50 bg-neo-contrast-inverse flex items-center justify-center">
         <button
           onClick={toggleFullscreen}
-          className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 p-2"
+          className="absolute top-4 right-4 z-10 text-neo-contrast hover:text-gray-300 p-2"
           aria-label="Exit fullscreen"
         >
           <X className="w-6 h-6" />
         </button>
         
         <div className="flex flex-col items-center justify-center p-8 max-w-md w-full">
-          <div className="bg-white p-8 rounded-lg mb-6 shadow-2xl">
+          <div className="bg-neo-contrast p-8 rounded-lg mb-6 shadow-2xl">
             {qrCodeUrl && (
               <img 
                 src={qrCodeUrl} 
@@ -146,10 +146,10 @@ const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ tic
               />
             )}
           </div>
-          <div className="text-center text-white">
+          <div className="text-center text-neo-contrast">
             <h2 className="font-bold text-xl mb-2">{ticket.eventName}</h2>
-            <p className="text-white/70">{ticket.seat}</p>
-            <p className="text-white/60 text-sm font-mono mt-2">
+            <p className="text-neo-contrast/70">{ticket.seat}</p>
+            <p className="text-neo-contrast/60 text-sm font-mono mt-2">
               Present to scanner at venue
             </p>
           </div>
@@ -159,22 +159,22 @@ const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ tic
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-black border-2 border-white/20 rounded-lg max-w-md w-full p-6">
+    <div className="fixed inset-0 z-50 bg-neo-contrast-inverse/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-neo-contrast-inverse border-2 border-neo-border/20 rounded-lg max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-white font-mono uppercase">Ticket QR</h2>
-          <button onClick={onClose} className="text-white hover:text-gray-300" aria-label="Close modal">
+          <h2 className="text-lg font-bold text-neo-contrast font-mono uppercase">Ticket QR</h2>
+          <button onClick={onClose} className="text-neo-contrast hover:text-gray-300" aria-label="Close modal">
             <X className="w-5 h-5" />
           </button>
         </div>
         
         <div className="space-y-4">
           <div className="text-center">
-            <h3 className="font-bold text-white mb-1">{ticket.eventName}</h3>
-            <p className="text-white/70 text-sm">{ticket.seat}</p>
+            <h3 className="font-bold text-neo-contrast mb-1">{ticket.eventName}</h3>
+            <p className="text-neo-contrast/70 text-sm">{ticket.seat}</p>
           </div>
           
-          <div className="bg-white p-4 rounded-lg">
+          <div className="bg-neo-contrast p-4 rounded-lg">
             {qrCodeUrl ? (
               <img 
                 src={qrCodeUrl} 
@@ -186,20 +186,20 @@ const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ tic
             )}
           </div>
           
-          <div className="text-center text-xs text-white/60 font-mono">
+          <div className="text-center text-xs text-neo-contrast/60 font-mono">
             ID: {ticket.id}
           </div>
           
           <div className="flex gap-2">
             <button
               onClick={toggleFullscreen}
-              className="flex-1 bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-4 font-mono text-xs font-bold transition-colors"
+              className="flex-1 bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast border-2 border-neo-border py-2 px-4 font-mono text-xs font-bold transition-colors"
             >
               [ PRESENT ]
             </button>
             <button
               onClick={handleDownload}
-              className="flex-1 bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-4 font-mono text-xs font-bold transition-colors"
+              className="flex-1 bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse border-2 border-neo-border/25 hover:border-neo-border py-2 px-4 font-mono text-xs font-bold transition-colors"
             >
               <Download className="w-4 h-4 mr-1" />
               SAVE
@@ -207,7 +207,7 @@ const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ tic
             {navigator.share && (
               <button
                 onClick={handleShare}
-                className="flex-1 bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-4 font-mono text-xs font-bold transition-colors"
+                className="flex-1 bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse border-2 border-neo-border/25 hover:border-neo-border py-2 px-4 font-mono text-xs font-bold transition-colors"
               >
                 <Share className="w-4 h-4 mr-1" />
                 SHARE
@@ -225,13 +225,13 @@ const StatusBadge: React.FC<{ status: Ticket['status'] }> = ({ status }) => {
   const getStatusConfig = () => {
     switch (status) {
       case 'VALID':
-        return { text: 'VALID', className: 'bg-green-500 text-black' }
+        return { text: 'VALID', className: 'bg-green-500 text-neo-contrast-inverse' }
       case 'EXPIRED':
-        return { text: 'EXPIRED', className: 'bg-red-500 text-white' }
+        return { text: 'EXPIRED', className: 'bg-red-500 text-neo-contrast' }
       case 'REDEEMED':
-        return { text: 'REDEEMED', className: 'bg-amber-500 text-black' }
+        return { text: 'REDEEMED', className: 'bg-amber-500 text-neo-contrast-inverse' }
       case 'NOT_YET_VALID':
-        return { text: 'NOT YET VALID', className: 'bg-amber-500 text-black' }
+        return { text: 'NOT YET VALID', className: 'bg-amber-500 text-neo-contrast-inverse' }
       default:
         return { text: 'UNKNOWN', className: 'bg-muted text-muted-foreground' }
     }
@@ -275,27 +275,27 @@ const TicketCard: React.FC<{
     <div className={`border-2 rounded-lg p-4 transition-all ${
       isActive 
         ? 'border-green-500/30 bg-green-500/5 shadow-[0_0_20px_rgba(34,197,94,0.1)]' 
-        : 'border-white/20 bg-white/5'
+        : 'border-neo-border/20 bg-neo-contrast/5'
     }`}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
-          <h3 className="font-bold text-white mb-1">{ticket.eventName}</h3>
-          <p className="text-white/70 text-sm">{ticket.seat}</p>
+          <h3 className="font-bold text-neo-contrast mb-1">{ticket.eventName}</h3>
+          <p className="text-neo-contrast/70 text-sm">{ticket.seat}</p>
         </div>
         <StatusBadge status={ticket.status} />
       </div>
       
       <div className="space-y-2 mb-4 text-sm">
-        <div className="text-white/70">
-          <span className="font-mono text-xs text-white/50">VALID:</span>{' '}
+        <div className="text-neo-contrast/70">
+          <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}
           {formatValidityWindow()}
         </div>
         
-        <div className="text-white/70">
-          <span className="font-mono text-xs text-white/50">OUTPOINT:</span>{' '}
+        <div className="text-neo-contrast/70">
+          <span className="font-mono text-xs text-neo-contrast/50">OUTPOINT:</span>{' '}
           <button
             onClick={onCopyOutpoint}
-            className="font-mono hover:text-white transition-colors inline-flex items-center gap-1"
+            className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
             aria-label="Copy outpoint"
           >
             {ticket.outpoint}
@@ -304,8 +304,8 @@ const TicketCard: React.FC<{
         </div>
         
         {ticket.priceInSats && (
-          <div className="text-white/70">
-            <span className="font-mono text-xs text-white/50">PAID:</span>{' '}
+          <div className="text-neo-contrast/70">
+            <span className="font-mono text-xs text-neo-contrast/50">PAID:</span>{' '}
             <span className="font-mono">{ticket.priceInSats.toLocaleString()} sats</span>
           </div>
         )}
@@ -314,7 +314,7 @@ const TicketCard: React.FC<{
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={onViewQR}
-          className="flex-1 min-w-[100px] bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-3 font-mono text-xs font-bold transition-all shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px]"
+          className="flex-1 min-w-[100px] bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast border-2 border-neo-border py-2 px-3 font-mono text-xs font-bold transition-all shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px]"
         >
           <QrCode className="w-4 h-4 mr-1" />
           QR
@@ -324,14 +324,14 @@ const TicketCard: React.FC<{
           <>
             <button
               onClick={onRedeem}
-              className="flex-1 min-w-[100px] bg-green-500 text-black hover:bg-black hover:text-green-500 border-2 border-green-500 py-2 px-3 font-mono text-xs font-bold transition-all"
+              className="flex-1 min-w-[100px] bg-green-500 text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-green-500 border-2 border-green-500 py-2 px-3 font-mono text-xs font-bold transition-all"
             >
               REDEEM
             </button>
             
             <button
               onClick={onTransfer}
-              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              className="bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse border-2 border-neo-border/25 hover:border-neo-border py-2 px-3 font-mono text-xs font-bold transition-all"
               aria-label="Transfer ticket"
             >
               <Send className="w-4 h-4" />
@@ -339,7 +339,7 @@ const TicketCard: React.FC<{
             
             <button
               onClick={onListForSale}
-              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              className="bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse border-2 border-neo-border/25 hover:border-neo-border py-2 px-3 font-mono text-xs font-bold transition-all"
               aria-label="List for sale"
             >
               <DollarSign className="w-4 h-4" />
@@ -347,7 +347,7 @@ const TicketCard: React.FC<{
             
             <button
               onClick={onFeedback}
-              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              className="bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse border-2 border-neo-border/25 hover:border-neo-border py-2 px-3 font-mono text-xs font-bold transition-all"
               aria-label="Leave feedback"
             >
               <MessageCircle className="w-4 h-4" />
@@ -355,7 +355,7 @@ const TicketCard: React.FC<{
             
             <button
               onClick={onRefund}
-              className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+              className="bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse border-2 border-neo-border/25 hover:border-neo-border py-2 px-3 font-mono text-xs font-bold transition-all"
               aria-label="Request refund"
             >
               <RefreshCw className="w-4 h-4" />
@@ -366,7 +366,7 @@ const TicketCard: React.FC<{
         {isRedeemed && (
           <button
             onClick={onFeedback}
-            className="bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white py-2 px-3 font-mono text-xs font-bold transition-all"
+            className="bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse border-2 border-neo-border/25 hover:border-neo-border py-2 px-3 font-mono text-xs font-bold transition-all"
             aria-label="Leave feedback"
           >
             <MessageCircle className="w-4 h-4" />
@@ -379,21 +379,21 @@ const TicketCard: React.FC<{
 
 // Loading skeleton component
 const TicketSkeleton: React.FC = () => (
-  <div className="border border-white/10 rounded-lg p-4">
+  <div className="border border-neo-border/10 rounded-lg p-4">
     <div className="space-y-3">
       <div className="flex justify-between items-start">
-        <Skeleton className="h-6 w-48 bg-white/10" />
-        <Skeleton className="h-5 w-16 bg-white/10" />
+        <Skeleton className="h-6 w-48 bg-neo-contrast/10" />
+        <Skeleton className="h-5 w-16 bg-neo-contrast/10" />
       </div>
       <div className="space-y-2">
-        <Skeleton className="h-4 w-32 bg-white/10" />
-        <Skeleton className="h-4 w-40 bg-white/10" />
-        <Skeleton className="h-4 w-36 bg-white/10" />
+        <Skeleton className="h-4 w-32 bg-neo-contrast/10" />
+        <Skeleton className="h-4 w-40 bg-neo-contrast/10" />
+        <Skeleton className="h-4 w-36 bg-neo-contrast/10" />
       </div>
       <div className="flex gap-2">
-        <Skeleton className="h-8 w-20 bg-white/10" />
-        <Skeleton className="h-8 w-20 bg-white/10" />
-        <Skeleton className="h-8 w-20 bg-white/10" />
+        <Skeleton className="h-8 w-20 bg-neo-contrast/10" />
+        <Skeleton className="h-8 w-20 bg-neo-contrast/10" />
+        <Skeleton className="h-8 w-20 bg-neo-contrast/10" />
       </div>
     </div>
   </div>
@@ -532,7 +532,7 @@ const Tickets = () => {
         <ScanlineOverlay />
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase">MY TICKETS</h1>
+            <h1 className="text-3xl font-bold font-mono tracking-wider text-neo-contrast uppercase">MY TICKETS</h1>
           </div>
           
           <div className="grid gap-6 md:grid-cols-2">
@@ -551,10 +551,10 @@ const Tickets = () => {
       
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase">MY TICKETS</h1>
+          <h1 className="text-3xl font-bold font-mono tracking-wider text-neo-contrast uppercase">MY TICKETS</h1>
           <Link 
             to="/marketplace" 
-            className="bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-4 font-mono text-sm font-bold transition-all shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] no-underline"
+            className="bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast border-2 border-neo-border py-2 px-4 font-mono text-sm font-bold transition-all shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] no-underline"
           >
             [ PURCHASE TICKETS ]
           </Link>
@@ -562,12 +562,12 @@ const Tickets = () => {
 
         {activeTickets.length === 0 && redeemedTickets.length === 0 ? (
           <div className="text-center py-16">
-            <div className="border-2 border-white/20 rounded-lg p-8 max-w-md mx-auto bg-white/5">
-              <h2 className="text-xl font-bold text-white mb-4">No Tickets Found</h2>
-              <p className="text-white/70 mb-6">You don't have any tickets yet. Purchase some from the marketplace to get started.</p>
+            <div className="border-2 border-neo-border/20 rounded-lg p-8 max-w-md mx-auto bg-neo-contrast/5">
+              <h2 className="text-xl font-bold text-neo-contrast mb-4">No Tickets Found</h2>
+              <p className="text-neo-contrast/70 mb-6">You don't have any tickets yet. Purchase some from the marketplace to get started.</p>
               <Link 
                 to="/marketplace"
-                className="inline-block bg-white text-black hover:bg-black hover:text-white border-2 border-white py-2 px-4 font-mono text-sm font-bold transition-all shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] no-underline"
+                className="inline-block bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast border-2 border-neo-border py-2 px-4 font-mono text-sm font-bold transition-all shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] no-underline"
               >
                 [ BROWSE MARKETPLACE ]
               </Link>
@@ -578,7 +578,7 @@ const Tickets = () => {
             {/* Active Tickets */}
             {activeTickets.length > 0 && (
               <div className="mb-12">
-                <h2 className="text-xl font-bold text-white mb-6 font-mono uppercase">Active Tickets</h2>
+                <h2 className="text-xl font-bold text-neo-contrast mb-6 font-mono uppercase">Active Tickets</h2>
                 <div className="grid gap-6 md:grid-cols-2">
                   {activeTickets.map((ticket) => (
                     <TicketCard
@@ -600,7 +600,7 @@ const Tickets = () => {
             {/* Redeemed Tickets History */}
             {redeemedTickets.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-white mb-6 font-mono uppercase">History</h2>
+                <h2 className="text-xl font-bold text-neo-contrast mb-6 font-mono uppercase">History</h2>
                 <div className="grid gap-6 md:grid-cols-2">
                   {redeemedTickets.map((ticket) => (
                     <TicketCard

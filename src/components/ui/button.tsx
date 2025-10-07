@@ -18,8 +18,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md",
         ghost: "hover:bg-accent hover:text-accent-foreground rounded-md",
         link: "text-primary underline-offset-4 hover:underline",
-        neo: "bg-neo-cyan text-black border-2 border-black hover:bg-neo-cyan-hover hover:shadow-[2px_2px_0px_0px] hover:shadow-neo-shadow active:bg-neo-cyan-active rounded-full font-bold transition-all duration-150",
-        "neo-outline": "bg-transparent text-foreground border-2 border-foreground hover:bg-foreground hover:text-background hover:shadow-[2px_2px_0px_0px] hover:shadow-foreground rounded-full font-bold transition-all duration-150",
+        neo: "bg-neo-cyan text-black border-2 border-black hover:bg-neo-cyan-hover hover:shadow-neo-md active:bg-neo-cyan-active rounded-full font-bold transition-all duration-150",
+        "neo-outline": "bg-transparent text-foreground border-2 border-foreground hover:bg-foreground hover:text-background hover:shadow-neo-md rounded-full font-bold transition-all duration-150",
       },
       size: {
         default: "h-10 px-4 py-2",

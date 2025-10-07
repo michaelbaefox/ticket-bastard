@@ -66,10 +66,10 @@ const FeedbackModal = ({ isOpen, onClose, eventName, eventId }: FeedbackModalPro
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-white/20 max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 max-w-md">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-sm">EVENT FEEDBACK</DialogTitle>
-          <div className="text-xs text-white/60 font-mono mt-1">{eventName}</div>
+          <div className="text-xs text-neo-contrast/60 font-mono mt-1">{eventName}</div>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -90,7 +90,7 @@ const FeedbackModal = ({ isOpen, onClose, eventName, eventId }: FeedbackModalPro
                     className={`w-6 h-6 ${
                       star <= (hoverRating || rating) 
                         ? 'fill-yellow-500 text-yellow-500' 
-                        : 'text-white/30'
+                        : 'text-neo-contrast/30'
                     }`} 
                   />
                 </button>
@@ -104,7 +104,7 @@ const FeedbackModal = ({ isOpen, onClose, eventName, eventId }: FeedbackModalPro
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
-              className="w-full px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm"
+              className="w-full px-3 py-2 bg-neo-contrast-inverse border border-neo-border/20 rounded-md font-mono text-sm"
             >
               <option value="event">Event Experience</option>
               <option value="venue">Venue Quality</option>
@@ -122,7 +122,7 @@ const FeedbackModal = ({ isOpen, onClose, eventName, eventId }: FeedbackModalPro
               className="min-h-[100px] font-mono text-sm"
               maxLength={500}
             />
-            <div className="text-xs text-white/60 mt-1 font-mono">
+            <div className="text-xs text-neo-contrast/60 mt-1 font-mono">
               {feedback.length}/500 characters
             </div>
           </div>
@@ -131,7 +131,7 @@ const FeedbackModal = ({ isOpen, onClose, eventName, eventId }: FeedbackModalPro
           <div>
             <label className="block text-sm font-mono mb-2">
               Email (optional)
-              <span className="text-xs text-white/60 ml-2">for follow-up</span>
+              <span className="text-xs text-neo-contrast/60 ml-2">for follow-up</span>
             </label>
             <Input
               type="email"

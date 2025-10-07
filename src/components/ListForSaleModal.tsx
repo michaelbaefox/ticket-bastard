@@ -43,20 +43,20 @@ export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-white/20 text-white max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-center">LIST FOR SALE</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           <div>
-            <h3 className="font-bold text-white mb-1">{eventName}</h3>
-            <p className="text-sm text-white/70 font-mono">ID: {ticketId}</p>
-            <p className="text-sm text-white/60">Original: {originalPrice.toLocaleString()} sats</p>
+            <h3 className="font-bold text-neo-contrast mb-1">{eventName}</h3>
+            <p className="text-sm text-neo-contrast/70 font-mono">ID: {ticketId}</p>
+            <p className="text-sm text-neo-contrast/60">Original: {originalPrice.toLocaleString()} sats</p>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="price" className="text-sm text-white/70">
+            <Label htmlFor="price" className="text-sm text-neo-contrast/70">
               Sale Price (sats)
             </Label>
             <Input
@@ -64,12 +64,12 @@ export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
               type="number"
               value={priceInSats}
               onChange={(e) => setPriceInSats(e.target.value)}
-              className="font-mono text-sm bg-transparent border-white/25 text-white"
+              className="font-mono text-sm bg-transparent border-neo-border/25 text-neo-contrast"
               min="1"
             />
           </div>
           
-          <Separator className="bg-white/20" />
+          <Separator className="bg-neo-contrast/20" />
           
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -80,18 +80,18 @@ export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
               <span>Network Fee</span>
               <span>{networkFee.toLocaleString()} sats</span>
             </div>
-            <div className="flex justify-between text-sm text-white/60">
+            <div className="flex justify-between text-sm text-neo-contrast/60">
               <span>Artist/Venue Share (10%)</span>
               <span>{artistVenueShare.toLocaleString()} sats</span>
             </div>
-            <Separator className="bg-white/20" />
+            <Separator className="bg-neo-contrast/20" />
             <div className="flex justify-between font-bold">
               <span>You Receive</span>
               <span>{(parseFloat(priceInSats) - listingFee - networkFee || 0).toLocaleString()} sats</span>
             </div>
           </div>
           
-          <div className="text-xs text-white/60 font-mono">
+          <div className="text-xs text-neo-contrast/60 font-mono">
             ✓ Fair resale market - no scalping<br/>
             ✓ Artist/venue gets share automatically<br/>
             ✓ Instant payout on sale

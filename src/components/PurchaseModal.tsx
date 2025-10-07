@@ -67,7 +67,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-white/20 text-white max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-center">PURCHASE TICKET</DialogTitle>
         </DialogHeader>
@@ -80,11 +80,11 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
         ) : (
           <div className="space-y-4">
             <div>
-              <h3 className="font-bold text-white mb-2">{eventName}</h3>
-              <p className="text-sm text-white/70">General Admission</p>
+              <h3 className="font-bold text-neo-contrast mb-2">{eventName}</h3>
+              <p className="text-sm text-neo-contrast/70">General Admission</p>
             </div>
             
-            <Separator className="bg-white/20" />
+            <Separator className="bg-neo-contrast/20" />
             
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -99,14 +99,14 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 <span>Network Fee</span>
                 <span>{networkFee.toLocaleString()} sats</span>
               </div>
-              <Separator className="bg-white/20" />
+              <Separator className="bg-neo-contrast/20" />
               <div className="flex justify-between font-bold">
                 <span>Total</span>
                 <span>{totalCost.toLocaleString()} sats</span>
               </div>
             </div>
             
-            <div className="text-xs text-white/60 font-mono">
+            <div className="text-xs text-neo-contrast/60 font-mono">
               ✓ No hidden fees<br/>
               ✓ Artist/venue receives share of resales<br/>
               ✓ Instant transfer to your wallet

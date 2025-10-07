@@ -62,7 +62,7 @@ export default function App({ children }: { children: React.ReactNode }) {
 
                 {/* Desktop Navigation */}
                 {isDesktop && (
-                  <nav className="flex items-center text-white/70" role="navigation" aria-label="Main navigation">
+                  <nav className="flex items-center text-neo-contrast/70" role="navigation" aria-label="Main navigation">
                     {navItems.map((item, index) => {
                       const isActive = pathname === item.path
                       return (
@@ -70,10 +70,10 @@ export default function App({ children }: { children: React.ReactNode }) {
                           key={item.path}
                           to={item.path}
                           onClick={() => setPathname(item.path)}
-                          className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                          className={`text-[13px] md:text-sm font-medium transition-colors no-underline px-3 py-2 rounded visited:text-neo-contrast/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                             isActive
-                              ? 'text-white underline underline-offset-8 decoration-2'
-                              : 'text-white/70 hover:text-white hover:underline underline-offset-8'
+                              ? 'text-neo-contrast underline underline-offset-8 decoration-2'
+                              : 'text-neo-contrast/70 hover:text-neo-contrast hover:underline underline-offset-8'
                           }`}
                           style={{
                             textDecorationColor: isActive ? 'hsl(var(--primary))' : undefined,
@@ -123,7 +123,7 @@ export default function App({ children }: { children: React.ReactNode }) {
                     to={item.path}
                     onClick={() => { setPathname(item.path); setIsMenuOpen(false) }}
                     className={`flex items-center w-full gap-3 text-lg font-semibold p-3 transition-colors ${
-                      isActive ? 'text-white underline underline-offset-8' : 'text-white/70 hover:text-white hover:underline underline-offset-8'
+                      isActive ? 'text-neo-contrast underline underline-offset-8' : 'text-neo-contrast/70 hover:text-neo-contrast hover:underline underline-offset-8'
                     }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -152,11 +152,11 @@ export default function App({ children }: { children: React.ReactNode }) {
         </main>
         
         <footer className="mt-auto border-t border-border" role="contentinfo">
-          <div className="mx-auto px-4 py-6 text-sm text-white/60 flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1000px]">
+          <div className="mx-auto px-4 py-6 text-sm text-neo-contrast/60 flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1000px]">
             <div>© {new Date().getFullYear()} TicketBastard. Fuck around and find out.</div>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-white transition-colors">Docs</a>
-              <a href="#" className="hover:text-white transition-colors">GitHub</a>
+              <a href="#" className="hover:text-neo-contrast transition-colors">Docs</a>
+              <a href="#" className="hover:text-neo-contrast transition-colors">GitHub</a>
             </div>
           </div>
         </footer>

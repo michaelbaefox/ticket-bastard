@@ -241,33 +241,33 @@ const Venue = () => {
   const getBannerStyles = (state: ScanState) => {
     switch (state) {
       case "VALID":
-        return "bg-green-500 text-black";
+        return "bg-green-500 text-neo-contrast-inverse";
       case "ALREADY_USED":
-        return "bg-amber-400 text-black";
+        return "bg-amber-400 text-neo-contrast-inverse";
       case "INVALID":
       case "ERROR":
-        return "bg-red-500 text-black";
+        return "bg-red-500 text-neo-contrast-inverse";
       default:
-        return "bg-red-500 text-black";
+        return "bg-red-500 text-neo-contrast-inverse";
     }
   };
 
   const getStatusPillStyles = (state: ScanState) => {
     switch (state) {
       case "VALID":
-        return "bg-green-500 text-black";
+        return "bg-green-500 text-neo-contrast-inverse";
       case "ALREADY_USED":
-        return "bg-amber-400 text-black";
+        return "bg-amber-400 text-neo-contrast-inverse";
       case "INVALID":
       case "ERROR":
-        return "bg-red-500 text-white";
+        return "bg-red-500 text-neo-contrast";
       default:
-        return "bg-red-500 text-white";
+        return "bg-red-500 text-neo-contrast";
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-neo-contrast-inverse text-neo-contrast">
       <ScanlineOverlay />
       {/* Scanner Stage */}
       <div className="relative flex flex-col items-center justify-center min-h-screen p-4">
@@ -275,7 +275,7 @@ const Venue = () => {
         <div className="relative w-full max-w-md aspect-square">
           {/* Controls Bar */}
           <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4">
-            <span className="text-xs font-mono text-white/60 uppercase">SCANNER</span>
+            <span className="text-xs font-mono text-neo-contrast/60 uppercase">SCANNER</span>
             <div className="flex gap-2">
               <Button
                 variant="neo-outline"
@@ -313,9 +313,9 @@ const Venue = () => {
           </div>
 
           {/* QR Scanner */}
-          <div className="relative w-full h-full border-2 border-white rounded-md overflow-hidden">
+          <div className="relative w-full h-full border-2 border-neo-border rounded-md overflow-hidden">
             {/* Scan Frame Overlay */}
-            <div className="absolute inset-4 border-2 border-white/50 rounded-md z-10 pointer-events-none" />
+            <div className="absolute inset-4 border-2 border-neo-border/50 rounded-md z-10 pointer-events-none" />
             
             {/* Video Element */}
             <video
@@ -327,7 +327,7 @@ const Venue = () => {
             />
             
             {!isScanning && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <div className="absolute inset-0 flex items-center justify-center bg-neo-contrast-inverse/50">
                 <Button
                   variant="neo"
                   onClick={() => setIsScanning(true)}
@@ -362,9 +362,9 @@ const Venue = () => {
 
           {/* Loading Indicator */}
           {isVerifying && (
-            <div className="absolute bottom-0 left-0 right-0 z-30 p-4 bg-white/10 backdrop-blur">
+            <div className="absolute bottom-0 left-0 right-0 z-30 p-4 bg-neo-contrast/10 backdrop-blur">
               <div className="flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-neo-border border-t-transparent rounded-full animate-spin" />
                 <span className="ml-2 font-mono text-sm">VERIFYING...</span>
               </div>
             </div>
@@ -378,9 +378,9 @@ const Venue = () => {
           <h2 className="text-lg font-bold mb-4 uppercase">RECENT SCANS</h2>
           <div className="space-y-2">
             {auditLog.map((result, index) => (
-              <div key={`${result.ts}-${index}`} className="flex items-center justify-between p-3 border border-white/20 rounded-md">
+              <div key={`${result.ts}-${index}`} className="flex items-center justify-between p-3 border border-neo-border/20 rounded-md">
                 <div className="flex items-center gap-4">
-                  <span className="font-mono text-sm text-white/60">
+                  <span className="font-mono text-sm text-neo-contrast/60">
                     [{formatTime(result.ts)}]
                   </span>
                   {result.outpoint && (
@@ -409,7 +409,7 @@ const Venue = () => {
 
       {/* Manual Entry Modal */}
       <Dialog open={showManualEntry} onOpenChange={setShowManualEntry}>
-        <DialogContent className="bg-black border-white/20">
+        <DialogContent className="bg-neo-contrast-inverse border-neo-border/20">
           <DialogHeader>
             <DialogTitle className="font-mono uppercase">MANUAL ENTRY</DialogTitle>
           </DialogHeader>
