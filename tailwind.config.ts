@@ -52,10 +52,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				'neo-cyan': 'hsl(var(--neo-cyan))',
-				'neo-cyan-hover': 'hsl(var(--neo-cyan-hover))',
-				'neo-cyan-active': 'hsl(var(--neo-cyan-active))',
-				'neo-shadow': 'hsl(var(--neo-shadow))',
+                                'neo-cyan': 'hsl(var(--neo-cyan))',
+                                'neo-cyan-hover': 'hsl(var(--neo-cyan-hover))',
+                                'neo-cyan-active': 'hsl(var(--neo-cyan-active))',
+                                'neo-shadow': 'hsl(var(--neo-shadow))',
+                                'neo-border': 'hsl(var(--neo-border-color))',
+                                'neo-contrast': 'hsl(var(--neo-contrast))',
+                                'neo-contrast-inverse': 'hsl(var(--neo-contrast-inverse))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -67,11 +70,23 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
-			},
+                        borderRadius: {
+                                lg: 'var(--radius)',
+                                md: 'calc(var(--radius) - 2px)',
+                                sm: 'calc(var(--radius) - 4px)'
+                        },
+                        boxShadow: {
+                                'neo-lg': 'var(--shadow-neo-lg)',
+                                'neo-md': 'var(--shadow-neo-md)',
+                                'neo-sm': 'var(--shadow-neo-sm)',
+                                'neo-outline': 'var(--shadow-neo-outline)',
+                                'neo-focus': 'var(--shadow-neo-focus)',
+                                'sidebar-border': '0 0 0 1px hsl(var(--sidebar-border))',
+                                'sidebar-accent': '0 0 0 1px hsl(var(--sidebar-accent))'
+                        },
+                        dropShadow: {
+                                'neo-glow': 'var(--shadow-neo-glow)'
+                        },
 			keyframes: {
 				'accordion-down': {
 					from: {

@@ -42,6 +42,22 @@ All colors MUST be HSL.
     --neo-cyan-hover: 186 100% 75%;
     --neo-cyan-active: 186 100% 65%;
     --neo-shadow: 0 0% 0%;
+    --neo-contrast: 0 0% 100%;
+    --neo-contrast-inverse: 0 0% 0%;
+    --neo-border-color: 0 0% 100%;
+    --neo-shadow-color: 0 0% 100%;
+    --neo-shadow-offset-lg: 4px;
+    --neo-shadow-offset-md: 2px;
+    --neo-shadow-offset-sm: 1px;
+    --neo-glow-color: 334 75% 60%;
+    --neo-glow-opacity: 0.25;
+    --neo-glow-radius: 40px;
+    --shadow-neo-lg: var(--neo-shadow-offset-lg) var(--neo-shadow-offset-lg) 0 0 hsl(var(--neo-shadow-color));
+    --shadow-neo-md: var(--neo-shadow-offset-md) var(--neo-shadow-offset-md) 0 0 hsl(var(--neo-shadow-color));
+    --shadow-neo-sm: var(--neo-shadow-offset-sm) var(--neo-shadow-offset-sm) 0 0 hsl(var(--neo-shadow-color));
+    --shadow-neo-outline: 0 0 0 1px hsl(var(--neo-border-color));
+    --shadow-neo-focus: 0 0 0 2px hsl(var(--neo-border-color));
+    --shadow-neo-glow: 0 0 var(--neo-glow-radius) hsl(var(--neo-glow-color) / var(--neo-glow-opacity));
     
     --radius: 1rem;
 
@@ -90,6 +106,19 @@ All colors MUST be HSL.
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --neo-contrast: 0 0% 100%;
+    --neo-contrast-inverse: 0 0% 0%;
+    --neo-border-color: 0 0% 100%;
+    --neo-shadow-color: 0 0% 100%;
+    --neo-glow-color: 334 75% 60%;
+    --neo-glow-opacity: 0.25;
+    --neo-glow-radius: 40px;
+    --shadow-neo-lg: var(--neo-shadow-offset-lg) var(--neo-shadow-offset-lg) 0 0 hsl(var(--neo-shadow-color));
+    --shadow-neo-md: var(--neo-shadow-offset-md) var(--neo-shadow-offset-md) 0 0 hsl(var(--neo-shadow-color));
+    --shadow-neo-sm: var(--neo-shadow-offset-sm) var(--neo-shadow-offset-sm) 0 0 hsl(var(--neo-shadow-color));
+    --shadow-neo-outline: 0 0 0 1px hsl(var(--neo-border-color));
+    --shadow-neo-focus: 0 0 0 2px hsl(var(--neo-border-color));
+    --shadow-neo-glow: 0 0 var(--neo-glow-radius) hsl(var(--neo-glow-color) / var(--neo-glow-opacity));
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

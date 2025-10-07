@@ -55,7 +55,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-white/20 text-white max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-center">TRANSFER TICKET</DialogTitle>
         </DialogHeader>
@@ -68,12 +68,12 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         ) : (
           <div className="space-y-4">
             <div>
-              <h3 className="font-bold text-white mb-1">{eventName}</h3>
-              <p className="text-sm text-white/70 font-mono">ID: {ticketId}</p>
+              <h3 className="font-bold text-neo-contrast mb-1">{eventName}</h3>
+              <p className="text-sm text-neo-contrast/70 font-mono">ID: {ticketId}</p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="recipient" className="text-sm text-white/70">
+              <Label htmlFor="recipient" className="text-sm text-neo-contrast/70">
                 Recipient Address
               </Label>
               <Input
@@ -81,11 +81,11 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 value={recipientAddress}
                 onChange={(e) => setRecipientAddress(e.target.value)}
                 placeholder="bc1q... or tb1q..."
-                className="font-mono text-sm bg-transparent border-white/25 text-white"
+                className="font-mono text-sm bg-transparent border-neo-border/25 text-neo-contrast"
               />
             </div>
             
-            <Separator className="bg-white/20" />
+            <Separator className="bg-neo-contrast/20" />
             
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -96,14 +96,14 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 <span>Network Fee</span>
                 <span>{networkFee.toLocaleString()} sats</span>
               </div>
-              <Separator className="bg-white/20" />
+              <Separator className="bg-neo-contrast/20" />
               <div className="flex justify-between font-bold">
                 <span>Total Cost</span>
                 <span>{networkFee.toLocaleString()} sats</span>
               </div>
             </div>
             
-            <div className="text-xs text-white/60 font-mono">
+            <div className="text-xs text-neo-contrast/60 font-mono">
               ⚠ Transfer is irreversible<br/>
               ✓ Recipient gets full ticket rights
             </div>

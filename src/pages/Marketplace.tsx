@@ -154,7 +154,7 @@ export default function Marketplace() {
       <div className="max-w-[1280px] mx-auto px-4 py-8">
         {/* Page Header */}
         <header className="mb-8">
-          <h1 className="text-3xl font-bold font-mono tracking-wider text-white uppercase mb-6">MARKETPLACE</h1>
+          <h1 className="text-3xl font-bold font-mono tracking-wider text-neo-contrast uppercase mb-6">MARKETPLACE</h1>
         </header>
         
         {/* Toolbar */}
@@ -163,13 +163,13 @@ export default function Marketplace() {
             {/* Search */}
             <form onSubmit={handleSearch} className="flex-1 max-w-md" role="search">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" aria-hidden="true" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neo-contrast/40 w-4 h-4" aria-hidden="true" />
                 <Input
                   type="text"
                   placeholder="SEARCH EVENTS..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 font-mono uppercase placeholder:text-white/40 bg-transparent border-white/25 focus:border-white focus:ring-white text-white"
+                  className="pl-10 font-mono uppercase placeholder:text-neo-contrast/40 bg-transparent border-neo-border/25 focus:border-neo-border focus:ring-white text-neo-contrast"
                   aria-label="Search events"
                 />
               </div>
@@ -179,10 +179,10 @@ export default function Marketplace() {
             <div className="flex items-center gap-4">
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-40 font-mono text-xs bg-transparent border-white/25 focus:border-white text-white">
+                <SelectTrigger className="w-40 font-mono text-xs bg-transparent border-neo-border/25 focus:border-neo-border text-neo-contrast">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-black border-white/25">
+                <SelectContent className="bg-neo-contrast-inverse border-neo-border/25">
                   <SelectItem value="price-asc" className="font-mono text-xs">PRICE ↑</SelectItem>
                   <SelectItem value="price-desc" className="font-mono text-xs">PRICE ↓</SelectItem>
                   <SelectItem value="date-asc" className="font-mono text-xs">DATE ↑</SelectItem>
@@ -194,22 +194,22 @@ export default function Marketplace() {
               <Button
                 variant="outline"
                 size="sm"
-                className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
+                className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 FILTER
               </Button>
 
               {/* View Toggle */}
-              <div className="flex border border-white/25 rounded">
+              <div className="flex border border-neo-border/25 rounded">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
                   className={`font-mono text-xs font-bold rounded-none ${
                     viewMode === 'grid'
-                      ? 'bg-white text-black shadow-[2px_2px_0_0_white]'
-                      : 'bg-transparent text-white hover:bg-white hover:text-black'
+                      ? 'bg-neo-contrast text-neo-contrast-inverse shadow-neo-md'
+                      : 'bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse'
                   }`}
                 >
                   [ GRID ]
@@ -220,8 +220,8 @@ export default function Marketplace() {
                   onClick={() => setViewMode('list')}
                   className={`font-mono text-xs font-bold rounded-none ${
                     viewMode === 'list'
-                      ? 'bg-white text-black shadow-[2px_2px_0_0_white]'
-                      : 'bg-transparent text-white hover:bg-white hover:text-black'
+                      ? 'bg-neo-contrast text-neo-contrast-inverse shadow-neo-md'
+                      : 'bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse'
                   }`}
                 >
                   [ LIST ]
@@ -233,7 +233,7 @@ export default function Marketplace() {
 
         {/* Results Summary */}
         <div className="mb-6">
-          <p className="text-sm font-mono text-white/60" role="status" aria-live="polite">
+          <p className="text-sm font-mono text-neo-contrast/60" role="status" aria-live="polite">
             {isLoading ? 'Loading listings...' : `${sortedListings.length} ${sortedListings.length === 1 ? 'result' : 'results'} found`}
           </p>
         </div>
@@ -243,25 +243,25 @@ export default function Marketplace() {
           {isLoading ? (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} aria-label="Loading listings">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="bg-transparent border-white/10">
+                <Card key={i} className="bg-transparent border-neo-border/10">
                   <CardContent className="p-4">
-                    <Skeleton className="h-6 w-3/4 mb-4 bg-white/10" />
-                    <Skeleton className="h-4 w-1/2 mb-2 bg-white/10" />
-                    <Skeleton className="h-4 w-2/3 mb-2 bg-white/10" />
-                    <Skeleton className="h-4 w-1/3 mb-4 bg-white/10" />
-                    <Skeleton className="h-10 w-full bg-white/10" />
+                    <Skeleton className="h-6 w-3/4 mb-4 bg-neo-contrast/10" />
+                    <Skeleton className="h-4 w-1/2 mb-2 bg-neo-contrast/10" />
+                    <Skeleton className="h-4 w-2/3 mb-2 bg-neo-contrast/10" />
+                    <Skeleton className="h-4 w-1/3 mb-4 bg-neo-contrast/10" />
+                    <Skeleton className="h-10 w-full bg-neo-contrast/10" />
                   </CardContent>
                 </Card>
               ))}
             </div>
         ) : sortedListings.length === 0 ? (
           <div className="text-center py-16">
-            <Card className="bg-transparent border-white/20 max-w-md mx-auto">
+            <Card className="bg-transparent border-neo-border/20 max-w-md mx-auto">
               <CardContent className="p-8">
-                <p className="text-white/70 mb-4">No listings match your filters.</p>
+                <p className="text-neo-contrast/70 mb-4">No listings match your filters.</p>
                 <Button
                   onClick={() => setSearchQuery('')}
-                  className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white]"
+                  className="font-mono text-xs font-bold bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast shadow-neo-md"
                 >
                   [ RESET FILTERS ]
                 </Button>
@@ -271,21 +271,21 @@ export default function Marketplace() {
           ) : (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} role="list" aria-label="Event listings">
               {sortedListings.map((listing, index) => (
-                <Card key={listing.id} className="bg-transparent border-white/20 hover:border-white/30 transition-colors focus-within:border-white" role="listitem">
+                <Card key={listing.id} className="bg-transparent border-neo-border/20 hover:border-neo-border/30 transition-colors focus-within:border-neo-border" role="listitem">
                   <CardContent className="p-4">
-                    <h3 className="font-bold text-white mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
+                    <h3 className="font-bold text-neo-contrast mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
                   
                   <div className="space-y-2 mb-4 text-sm">
-                    <div className="text-white/70">
-                      <span className="font-mono text-xs text-white/50">VALID:</span>{' '}
+                    <div className="text-neo-contrast/70">
+                      <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}
                       {new Date(listing.validFrom).toLocaleDateString()} - {new Date(listing.validTo).toLocaleDateString()}
                     </div>
                     
-                    <div className="text-white/70">
-                      <span className="font-mono text-xs text-white/50">SELLER:</span>{' '}
+                    <div className="text-neo-contrast/70">
+                      <span className="font-mono text-xs text-neo-contrast/50">SELLER:</span>{' '}
                       <button
                         onClick={() => handleCopy(listing.sellerOutpoint, 'Seller address')}
-                        className="font-mono hover:text-white transition-colors inline-flex items-center gap-1"
+                        className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
                         aria-label="Copy seller address"
                       >
                         {truncateAddress(listing.sellerOutpoint)}
@@ -297,11 +297,11 @@ export default function Marketplace() {
                       </button>
                     </div>
                     
-                    <div className="text-white/70">
-                      <span className="font-mono text-xs text-white/50">TICKET:</span>{' '}
+                    <div className="text-neo-contrast/70">
+                      <span className="font-mono text-xs text-neo-contrast/50">TICKET:</span>{' '}
                       <button
                         onClick={() => handleCopy(listing.ticketOutpoint, 'Ticket outpoint')}
-                        className="font-mono hover:text-white transition-colors inline-flex items-center gap-1"
+                        className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
                         aria-label="Copy ticket outpoint"
                       >
                         {truncateAddress(listing.ticketOutpoint)}
@@ -315,15 +315,15 @@ export default function Marketplace() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-neo-contrast">
                       {listing.priceInSats.toLocaleString()}{' '}
-                      <span className="text-sm font-mono text-white/60">sats</span>
+                      <span className="text-sm font-mono text-neo-contrast/60">sats</span>
                     </div>
                     
                     <div className="flex gap-2">
                       <Button
                         onClick={() => handleBuyTicket(listing)}
-                        className="font-mono text-xs font-bold bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_white] hover:shadow-[1px_1px_0_0_white] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                        className="font-mono text-xs font-bold bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] transition-all"
                         aria-label={`Buy ticket for ${listing.eventName}`}
                         aria-describedby={`listing-${listing.id}`}
                       >
@@ -333,7 +333,7 @@ export default function Marketplace() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleFeedback(listing)}
-                        className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
+                        className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast"
                         aria-label={`Leave feedback for ${listing.eventName}`}
                       >
                         <MessageCircle className="w-4 h-4" aria-hidden="true" />
@@ -354,21 +354,21 @@ export default function Marketplace() {
               variant="outline"
               size="sm"
               disabled={currentPage === 1}
-              className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white disabled:opacity-30"
+              className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast disabled:opacity-30"
               aria-label="Go to previous page"
             >
               <ChevronLeft className="w-4 h-4 mr-1" aria-hidden="true" />
               PREV
             </Button>
             
-            <span className="font-mono text-sm text-white/70 px-4" aria-current="page">
+            <span className="font-mono text-sm text-neo-contrast/70 px-4" aria-current="page">
               PAGE {currentPage}
             </span>
             
             <Button
               variant="outline"
               size="sm"
-              className="font-mono text-xs bg-transparent border-white/25 hover:bg-white hover:text-black text-white"
+              className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast"
               aria-label="Go to next page"
             >
               NEXT
@@ -380,7 +380,7 @@ export default function Marketplace() {
         {/* Footer Flash Message */}
         {footerFlash && (
           <div className="mt-8 text-center">
-            <p className="text-xs font-mono text-white/40" role="status" aria-live="polite">
+            <p className="text-xs font-mono text-neo-contrast/40" role="status" aria-live="polite">
               {footerFlash}
             </p>
           </div>

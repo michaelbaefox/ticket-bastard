@@ -100,7 +100,7 @@ const FeedbackModal = ({ isOpen, onClose, eventName, eventId }: FeedbackModalPro
       <DialogContent className="bg-black border-white/20 max-w-md">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-sm">EVENT FEEDBACK</DialogTitle>
-          <div className="text-xs text-white/60 font-mono mt-1">{eventName}</div>
+          <div className="text-xs text-neo-contrast/60 font-mono mt-1">{eventName}</div>
         </DialogHeader>
 
         <Form {...form}>

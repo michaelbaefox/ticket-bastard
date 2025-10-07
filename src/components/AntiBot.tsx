@@ -58,7 +58,7 @@ const AntiBot = ({ onVerify, actionType }: AntiBotProps) => {
           <div className="font-mono uppercase text-sm text-yellow-500">ANTI-BOT VERIFICATION</div>
         </div>
         
-        <div className="text-sm text-white/90">
+        <div className="text-sm text-neo-contrast/90">
           To prevent automated abuse and ensure fair access, we need to verify you're human before completing this {getActionLabel()}.
         </div>
         
@@ -74,9 +74,9 @@ const AntiBot = ({ onVerify, actionType }: AntiBotProps) => {
 
   if (step === 'captcha') {
     return (
-      <div className="p-4 border border-white/20 rounded-md bg-white/5 space-y-3">
+      <div className="p-4 border border-neo-border/20 rounded-md bg-neo-contrast/5 space-y-3">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-white/60" />
+          <AlertTriangle className="w-5 h-5 text-neo-contrast/60" />
           <div className="font-mono uppercase text-sm">HUMAN VERIFICATION</div>
         </div>
         
@@ -88,7 +88,7 @@ const AntiBot = ({ onVerify, actionType }: AntiBotProps) => {
             type="number"
             value={captchaAnswer}
             onChange={(e) => setCaptchaAnswer(e.target.value)}
-            className="w-20 px-3 py-2 bg-black border border-white/20 rounded-md text-center font-mono"
+            className="w-20 px-3 py-2 bg-neo-contrast-inverse border border-neo-border/20 rounded-md text-center font-mono"
             placeholder="?"
             autoFocus
           />
@@ -97,7 +97,7 @@ const AntiBot = ({ onVerify, actionType }: AntiBotProps) => {
         <button
           onClick={handleCaptchaSubmit}
           disabled={!captchaAnswer}
-          className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-md font-mono uppercase text-sm hover:bg-white/20 transition-colors disabled:opacity-50"
+          className="w-full px-4 py-2 bg-neo-contrast/10 border border-neo-border/20 rounded-md font-mono uppercase text-sm hover:bg-neo-contrast/20 transition-colors disabled:opacity-50"
         >
           [ VERIFY ]
         </button>
@@ -114,7 +114,7 @@ const AntiBot = ({ onVerify, actionType }: AntiBotProps) => {
         </div>
         
         <div className="text-center">
-          <div className="text-sm text-white/90 mb-2">
+          <div className="text-sm text-neo-contrast/90 mb-2">
             Proceeding with {getActionLabel()} in:
           </div>
           <div className="text-2xl font-mono font-bold text-green-500">

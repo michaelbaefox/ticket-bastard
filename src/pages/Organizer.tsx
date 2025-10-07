@@ -428,9 +428,9 @@ const Organizer = () => {
   const getStatusPill = (event: OrganizerEvent) => {
     const status = getEventStatus(event.startsAtISO, event.endsAtISO);
     const styles = {
-      upcoming: "bg-white/10 text-white/70",
-      live: "bg-green-500 text-black",
-      ended: "bg-red-500 text-white"
+      upcoming: "bg-neo-contrast/10 text-neo-contrast/70",
+      live: "bg-green-500 text-neo-contrast-inverse",
+      ended: "bg-red-500 text-neo-contrast"
     };
     
     return (
@@ -458,30 +458,30 @@ const Organizer = () => {
 
         {/* KPI Tiles */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <div className="border border-white/20 rounded-md p-4">
+          <div className="border border-neo-border/20 rounded-md p-4">
             <div className="text-2xl font-bold">{formatNumber(kpis.revenue)}</div>
-            <div className="text-xs font-mono text-white/60 uppercase">REVENUE (SATS)</div>
+            <div className="text-xs font-mono text-neo-contrast/60 uppercase">REVENUE (SATS)</div>
           </div>
-          <div className="border border-white/20 rounded-md p-4">
+          <div className="border border-neo-border/20 rounded-md p-4">
             <div className="text-2xl font-bold">{formatNumber(kpis.ticketsSold)}</div>
-            <div className="text-xs font-mono text-white/60 uppercase">TICKETS SOLD</div>
+            <div className="text-xs font-mono text-neo-contrast/60 uppercase">TICKETS SOLD</div>
           </div>
-          <div className="border border-white/20 rounded-md p-4">
+          <div className="border border-neo-border/20 rounded-md p-4">
             <div className="text-2xl font-bold">{kpis.activeEvents}</div>
-            <div className="text-xs font-mono text-white/60 uppercase">ACTIVE EVENTS</div>
+            <div className="text-xs font-mono text-neo-contrast/60 uppercase">ACTIVE EVENTS</div>
           </div>
-          <div className="border border-white/20 rounded-md p-4">
+          <div className="border border-neo-border/20 rounded-md p-4">
             <div className="text-2xl font-bold">{pct(kpis.fillRate)}</div>
-            <div className="text-xs font-mono text-white/60 uppercase">FILL RATE</div>
+            <div className="text-xs font-mono text-neo-contrast/60 uppercase">FILL RATE</div>
           </div>
-          <div className="border border-white/20 rounded-md p-4">
+          <div className="border border-neo-border/20 rounded-md p-4">
             <div className="text-2xl font-bold">{pct(kpis.redemptionRate)}</div>
-            <div className="text-xs font-mono text-white/60 uppercase">REDEMPTION RATE</div>
+            <div className="text-xs font-mono text-neo-contrast/60 uppercase">REDEMPTION RATE</div>
           </div>
         </div>
 
         {/* Toolbar */}
-        <div className="space-y-4 mb-6 p-4 border border-white/20 rounded-md">
+        <div className="space-y-4 mb-6 p-4 border border-neo-border/20 rounded-md">
           {/* First Row */}
           <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
             <div className="relative md:w-auto">
@@ -533,7 +533,7 @@ const Organizer = () => {
                 onChange={(e) => updateURL({ ...query, min: e.target.value ? parseInt(e.target.value) : undefined })}
                 className="font-mono w-full sm:w-24"
               />
-              <span className="text-white/60">-</span>
+              <span className="text-neo-contrast/60">-</span>
               <Input
                 placeholder="Max price"
                 type="number"
@@ -541,7 +541,7 @@ const Organizer = () => {
                 onChange={(e) => updateURL({ ...query, max: e.target.value ? parseInt(e.target.value) : undefined })}
                 className="font-mono w-full sm:w-24"
               />
-              <span className="text-xs text-white/60 font-mono">sats</span>
+              <span className="text-xs text-neo-contrast/60 font-mono">sats</span>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:flex-row md:items-center">
@@ -552,7 +552,7 @@ const Organizer = () => {
                 onChange={(e) => updateURL({ ...query, from: e.target.value })}
                 className="font-mono w-full sm:w-36"
               />
-              <span className="text-white/60">-</span>
+              <span className="text-neo-contrast/60">-</span>
               <Input
                 type="date"
                 value={query.to || ''}
@@ -586,10 +586,10 @@ const Organizer = () => {
         <div className="hidden md:block border border-white/20 rounded-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-white/20">
-                <tr className="bg-white/5">
+              <thead className="border-b border-neo-border/20">
+                <tr className="bg-neo-contrast/5">
                   <th 
-                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10 select-none"
+                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-neo-contrast/10 select-none"
                     onClick={() => updateURL({ ...query, sort: query.sort === 'date_asc' ? 'date_desc' : 'date_asc' })}
                     aria-sort={query.sort?.includes('date') ? (query.sort.includes('asc') ? 'ascending' : 'descending') : 'none'}
                   >
@@ -600,7 +600,7 @@ const Organizer = () => {
                   </th>
                   <th className="text-left p-4 font-mono uppercase text-xs">VENUE</th>
                   <th 
-                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10 select-none"
+                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-neo-contrast/10 select-none"
                     onClick={() => updateURL({ ...query, sort: 'fill_desc' })}
                     aria-sort={query.sort === 'fill_desc' ? 'descending' : 'none'}
                   >
@@ -610,7 +610,7 @@ const Organizer = () => {
                     </div>
                   </th>
                   <th 
-                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-white/10 select-none"
+                    className="text-left p-4 font-mono uppercase text-xs cursor-pointer hover:bg-neo-contrast/10 select-none"
                     onClick={() => updateURL({ ...query, sort: 'revenue_desc' })}
                     aria-sort={query.sort === 'revenue_desc' ? 'descending' : 'none'}
                   >
@@ -740,7 +740,7 @@ const Organizer = () => {
 
       {/* Event Detail Drawer */}
       <Drawer open={showDrawer} onOpenChange={setShowDrawer}>
-        <DrawerContent className="bg-black border-white/20">
+        <DrawerContent className="bg-neo-contrast-inverse border-neo-border/20">
           <DrawerHeader>
             <div className="flex justify-between items-start">
               <div>
@@ -773,8 +773,8 @@ const Organizer = () => {
                     <Copy className="w-3 h-3" />
                   </Button>
                 </div>
-                <div className="text-sm text-white/60">{selectedEvent.venue}</div>
-                <div className="text-sm text-white/60 font-mono">
+                <div className="text-sm text-neo-contrast/60">{selectedEvent.venue}</div>
+                <div className="text-sm text-neo-contrast/60 font-mono">
                   {formatWindow(selectedEvent.startsAtISO, selectedEvent.endsAtISO)}
                 </div>
               </div>
@@ -783,25 +783,25 @@ const Organizer = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="text-lg font-bold">{formatNumber(selectedEvent.sold)} / {formatNumber(selectedEvent.capacity)}</div>
-                  <div className="text-xs text-white/60 font-mono uppercase">SOLD / CAPACITY</div>
+                  <div className="text-xs text-neo-contrast/60 font-mono uppercase">SOLD / CAPACITY</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold">{formatNumber(selectedEvent.revenueSats)} sats</div>
-                  <div className="text-xs text-white/60 font-mono uppercase">REVENUE</div>
+                  <div className="text-xs text-neo-contrast/60 font-mono uppercase">REVENUE</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold">{pct(selectedEvent.sold / selectedEvent.capacity)}</div>
-                  <div className="text-xs text-white/60 font-mono uppercase">FILL RATE</div>
+                  <div className="text-xs text-neo-contrast/60 font-mono uppercase">FILL RATE</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold">{pct(selectedEvent.sold ? selectedEvent.redeemed / selectedEvent.sold : 0)}</div>
-                  <div className="text-xs text-white/60 font-mono uppercase">REDEMPTION RATE</div>
+                  <div className="text-xs text-neo-contrast/60 font-mono uppercase">REDEMPTION RATE</div>
                 </div>
               </div>
 
               {/* Recent Activity */}
               <div className="space-y-2">
-                <div className="text-sm font-mono uppercase text-white/60">Recent Activity</div>
+                <div className="text-sm font-mono uppercase text-neo-contrast/60">Recent Activity</div>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
                   {[
                     { time: '2 min ago', action: 'Ticket purchased by bc1q...7x8z' },
@@ -809,9 +809,9 @@ const Organizer = () => {
                     { time: '12 min ago', action: 'Ticket transferred to bc1q...9a2b' },
                     { time: '18 min ago', action: 'Ticket purchased by bc1q...3c4d' }
                   ].map((activity, i) => (
-                    <div key={i} className="text-xs p-2 bg-white/5 rounded border border-white/10">
-                      <div className="text-white/60 font-mono">{activity.time}</div>
-                      <div className="text-white/90">{activity.action}</div>
+                    <div key={i} className="text-xs p-2 bg-neo-contrast/5 rounded border border-neo-border/10">
+                      <div className="text-neo-contrast/60 font-mono">{activity.time}</div>
+                      <div className="text-neo-contrast/90">{activity.action}</div>
                     </div>
                   ))}
                 </div>
