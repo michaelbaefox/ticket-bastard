@@ -1065,14 +1065,15 @@ const Organizer = () => {
           }
         }}
       >
-        <DialogContent className="bg-black border-white/20 max-w-2xl">
+        <DialogContent className="bg-black border-white/20 max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="font-mono uppercase">CREATE EVENT</DialogTitle>
           </DialogHeader>
 
-          <Form {...createEventForm}>
-            <form onSubmit={handleCreateEvent} className="space-y-4">
-              <FormField
+          <div className="flex-1 overflow-y-auto pr-1">
+            <Form {...createEventForm}>
+              <form onSubmit={handleCreateEvent} className="space-y-4 pb-6">
+                <FormField
                 control={createEventForm.control}
                 name="name"
                 render={({ field }) => (
@@ -1480,6 +1481,7 @@ const Organizer = () => {
               </div>
             </form>
           </Form>
+        </div>
         </DialogContent>
       </Dialog>
     </div>

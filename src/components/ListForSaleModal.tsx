@@ -70,12 +70,12 @@ export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-center">LIST FOR SALE</DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-4">
+
+        <div className="flex-1 space-y-4 overflow-y-auto pr-1">
           <div>
             <h3 className="font-bold text-neo-contrast mb-1">{eventName}</h3>
             <p className="text-sm text-neo-contrast/70 font-mono">ID: {ticketId}</p>

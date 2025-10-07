@@ -135,7 +135,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-center">PURCHASE TICKET</DialogTitle>
         </DialogHeader>
@@ -159,18 +159,51 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 <span>Ticket Price</span>
                 <span>{priceInSats.toLocaleString()} sats</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>Service Fee (3%)</span>
-                <span>{serviceFee.toLocaleString()} sats</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Network Fee</span>
-                <span>{networkFee.toLocaleString()} sats</span>
-              </div>
+
               <Separator className="bg-neo-contrast/20" />
-              <div className="flex justify-between font-bold">
-                <span>Total</span>
-                <span>{totalCost.toLocaleString()} sats</span>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Ticket Price</span>
+                  <span>{priceInSats.toLocaleString()} sats</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Service Fee (3%)</span>
+                  <span>{serviceFee.toLocaleString()} sats</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Network Fee</span>
+                  <span>{networkFee.toLocaleString()} sats</span>
+                </div>
+                <Separator className="bg-neo-contrast/20" />
+                <div className="flex justify-between font-bold">
+                  <span>Total</span>
+                  <span>{totalCost.toLocaleString()} sats</span>
+                </div>
+              </div>
+
+              <div className="text-xs text-neo-contrast/60 font-mono">
+                ✓ No hidden fees<br/>
+                ✓ Artist/venue receives share of resales<br/>
+                ✓ Instant transfer to your wallet
+              </div>
+
+              <Separator className="bg-neo-contrast/20" />
+
+              <div className="space-y-3 text-xs font-mono text-neo-contrast/70">
+                <div className="uppercase tracking-wide text-neo-contrast/40">Ticket Policy</div>
+                <div>Resale: {policy.resaleAllowed ? 'Allowed' : 'Disabled'}</div>
+                <div>Royalty: {(policy.royaltyBps / 100).toFixed(2)}%</div>
+                <div>Issuer: {policy.issuerId}</div>
+                <div className="space-y-1">
+                  <div className="text-neo-contrast/50">Primary Split</div>
+                  {primaryOutputs.map((output, idx) => (
+                    <div key={`${output.lockingScript}-${idx}`} className="flex justify-between">
+                      <span>{policy.primaryRecipients[idx]?.id ?? `Recipient ${idx + 1}`}</span>
+                      <span>{output.satoshis.toLocaleString()} sats</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             

@@ -76,18 +76,19 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md">
+      <DialogContent className="bg-neo-contrast-inverse border-neo-border/20 text-neo-contrast max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-center">TRANSFER TICKET</DialogTitle>
         </DialogHeader>
-        
-        {showAntiBot ? (
-          <AntiBot
-            onVerify={handleAntiBotComplete}
-            actionType="transfer"
-          />
-        ) : (
-          <div className="space-y-4">
+
+        <div className="flex-1 overflow-y-auto pr-1">
+          {showAntiBot ? (
+            <AntiBot
+              onVerify={handleAntiBotComplete}
+              actionType="transfer"
+            />
+          ) : (
+            <div className="space-y-4">
             <div>
               <h3 className="font-bold text-neo-contrast mb-1">{eventName}</h3>
               <p className="text-sm text-neo-contrast/70 font-mono">ID: {ticketId}</p>
@@ -129,12 +130,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
               </div>
             </div>
             
-            <div className="text-xs text-neo-contrast/60 font-mono">
-              ⚠ Transfer is irreversible<br/>
-              ✓ Recipient gets full ticket rights
+              <div className="text-xs text-neo-contrast/60 font-mono">
+                ⚠ Transfer is irreversible<br/>
+                ✓ Recipient gets full ticket rights
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <DialogFooter className="gap-2">
           <Button
