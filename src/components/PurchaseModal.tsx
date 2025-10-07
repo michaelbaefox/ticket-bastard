@@ -139,20 +139,25 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
         <DialogHeader>
           <DialogTitle className="font-mono uppercase text-center">PURCHASE TICKET</DialogTitle>
         </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto pr-1">
-          {showAntiBot ? (
-            <div className="flex h-full items-center justify-center">
-              <AntiBot
-                onVerify={handleAntiBotComplete}
-                actionType="purchase"
-              />
+        
+        {showAntiBot ? (
+          <AntiBot
+            onVerify={handleAntiBotComplete}
+            actionType="purchase"
+          />
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-bold text-neo-contrast mb-2">{eventName}</h3>
+              <p className="text-sm text-neo-contrast/70">{seatLabel}</p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-bold text-neo-contrast mb-2">{eventName}</h3>
-                <p className="text-sm text-neo-contrast/70">{seatLabel}</p>
+
+            <Separator className="bg-neo-contrast/20" />
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Ticket Price</span>
+                <span>{priceInSats.toLocaleString()} sats</span>
               </div>
 
               <Separator className="bg-neo-contrast/20" />
@@ -201,8 +206,32 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 </div>
               </div>
             </div>
-          )}
-        </div>
+            
+            <div className="text-xs text-neo-contrast/60 font-mono">
+              ✓ No hidden fees<br/>
+              ✓ Artist/venue receives share of resales<br/>
+              ✓ Instant transfer to your wallet
+            </div>
+
+            <Separator className="bg-neo-contrast/20" />
+
+            <div className="space-y-3 text-xs font-mono text-neo-contrast/70">
+              <div className="uppercase tracking-wide text-neo-contrast/40">Ticket Policy</div>
+              <div>Resale: {policy.resaleAllowed ? 'Allowed' : 'Disabled'}</div>
+              <div>Royalty: {(policy.royaltyBps / 100).toFixed(2)}%</div>
+              <div>Issuer: {policy.issuerId}</div>
+              <div className="space-y-1">
+                <div className="text-neo-contrast/50">Primary Split</div>
+                {primaryOutputs.map((output, idx) => (
+                  <div key={`${output.lockingScript}-${idx}`} className="flex justify-between">
+                    <span>{policy.primaryRecipients[idx]?.id ?? `Recipient ${idx + 1}`}</span>
+                    <span>{output.satoshis.toLocaleString()} sats</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <DialogFooter className="gap-2">
           <Button
