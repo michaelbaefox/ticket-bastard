@@ -615,7 +615,10 @@ const Tickets = () => {
     try {
       const ledgerRaw = window.localStorage.getItem('ticketBastardLedger')
       const ledger: TicketLedgerEntry[] = ledgerRaw ? JSON.parse(ledgerRaw) : []
-      ledger.push({
+      const ticketId = transferModal.ticket.id
+      const updatedLedger = ledger.filter(entry => entry.ticketId !== ticketId)
+
+      updatedLedger.push({
         ticketId: transferModal.ticket.id,
         eventId: transferModal.ticket.eventId ?? (Array.isArray(transferModal.ticket.pushDropFields) ? transferModal.ticket.pushDropFields[1] : ''),
         outpoint: `${transferResult.tx.txid}:0`,
@@ -624,7 +627,7 @@ const Tickets = () => {
         policyJson: transferModal.ticket.policyJson,
         issuerSignature: transferModal.ticket.issuerSignature
       })
-      window.localStorage.setItem('ticketBastardLedger', JSON.stringify(ledger))
+      window.localStorage.setItem('ticketBastardLedger', JSON.stringify(updatedLedger))
     } catch (error) {
       console.error('Failed to persist transfer ledger entry', error)
     }
