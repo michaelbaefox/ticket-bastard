@@ -13,51 +13,90 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
 import { useTickets } from '@/hooks/useLocalStorage'
 import { useFocusManagement, useAnnouncements } from '@/hooks/useAccessibility'
+import { StoredTicket, TicketPolicy, ResaleBuildResult, TicketLedgerEntry } from '@/types/ticketing'
+import { canonicalizePolicy, buildPrimarySaleOutputs, derivePolicySignature } from '@/lib/ticketing'
 
-interface Ticket {
-  id: string
-  eventName: string
-  seat: string
-  validFrom: string
-  validTo: string
-  outpoint: string
-  status: 'VALID' | 'EXPIRED' | 'REDEEMED' | 'NOT_YET_VALID'
-  priceInSats?: number
+const basePolicy: TicketPolicy = {
+  resaleAllowed: true,
+  royaltyBps: 600,
+  royaltyRecipients: [
+    { id: 'artist', lockingScriptHex: '76a914aa11aa11aa11aa11aa11aa11aa11aa1188ac', bps: 7000 },
+    { id: 'venue', lockingScriptHex: '76a914bb22bb22bb22bb22bb22bb22bb22bb2288ac', bps: 3000 }
+  ],
+  primaryRecipients: [
+    { id: 'organizer', lockingScriptHex: '76a914cc33cc33cc33cc33cc33cc33cc33cc3388ac', bps: 6000 },
+    { id: 'venue', lockingScriptHex: '76a914dd44dd44dd44dd44dd44dd44dd44dd4488ac', bps: 2500 },
+    { id: 'protocol', lockingScriptHex: '76a914ee55ee55ee55ee55ee55ee55ee55ee5588ac', bps: 1500 }
+  ],
+  version: '1',
+  issuerId: 'demo_issuer'
 }
 
+const basePolicyJson = canonicalizePolicy(basePolicy)
+const basePrimaryOutputs = buildPrimarySaleOutputs(50000, basePolicy)
+const baseSignature = derivePolicySignature('evt_cryptopunk2024', 'mock_ticket_1', basePolicyJson)
+
 // Mock data for demonstration
-const mockTickets: Ticket[] = [
+const mockTickets: StoredTicket[] = [
   {
-    id: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
-    eventName: "CRYPTO PUNK FESTIVAL 2024",
-    seat: "Section 1, Row A",
-    validFrom: "2024-03-15T18:00:00Z",
-    validTo: "2024-03-16T02:00:00Z",
-    outpoint: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx:0",
-    status: "VALID" as const,
+    id: 'mock_ticket_1',
+    eventId: 'evt_cryptopunk2024',
+    eventName: 'CRYPTO PUNK FESTIVAL 2024',
+    seat: 'Section 1, Row A',
+    validFrom: '2024-03-15T18:00:00Z',
+    validTo: '2024-03-16T02:00:00Z',
+    outpoint: 'tx_mock_1:0',
+    status: 'VALID',
     priceInSats: 50000,
-  },
-  {
-    id: "tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw",
-    eventName: "UNDERGROUND BASS COLLECTIVE",
-    seat: "General Admission",
-    validFrom: "2024-03-20T20:00:00Z",
-    validTo: "2024-03-21T04:00:00Z",
-    outpoint: "tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw:0",
-    status: "VALID" as const,
-    priceInSats: 75000,
-  },
-  {
-    id: "tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx",
-    eventName: "NEO-TOKYO NIGHT MARKET",
-    seat: "Section 2, Row C",
-    validFrom: "2024-01-25T19:00:00Z",
-    validTo: "2024-01-26T01:00:00Z",
-    outpoint: "tb1q9vza2e8x573nz2d09p6av6d2h0yqmq5cj6v8kx:0",
-    status: "REDEEMED" as const,
-    priceInSats: 125000,
-  },
+    pushDropFields: [
+      '1PushDropProtocolAddress',
+      'evt_cryptopunk2024',
+      'mock_ticket_1',
+      [12, 4, 210, 33],
+      '2024-03-15T18:00:00Z',
+      '2024-03-16T02:00:00Z',
+      basePolicyJson,
+      baseSignature
+    ],
+    policy: basePolicy,
+    policyJson: basePolicyJson,
+    issuerSignature: baseSignature,
+    provenance: [
+      {
+        txid: 'tx_mock_1',
+        salePriceSats: 50000,
+        outputs: [
+          { lockingScript: '76a914buyer00000000000000000000000000000088ac', satoshis: 1, outputDescription: 'Ticket output' },
+          ...basePrimaryOutputs
+        ],
+        type: 'primary',
+        timestampISO: '2024-01-01T00:00:00Z'
+      }
+    ],
+    lastTransferTx: {
+      txid: 'tx_mock_1',
+      salePriceSats: 50000,
+      outputs: [
+        { lockingScript: '76a914buyer00000000000000000000000000000088ac', satoshis: 1, outputDescription: 'Ticket output' },
+        ...basePrimaryOutputs
+      ],
+      type: 'primary',
+      timestampISO: '2024-01-01T00:00:00Z'
+    }
+  }
 ]
+
+type Ticket = StoredTicket
+
+const normalizeTickets = (records: any[]): Ticket[] => {
+  return records
+    .filter((record): record is Ticket => Boolean(record && record.policy && record.policyJson && record.lastTransferTx))
+    .map((record) => ({
+      ...record,
+      eventId: record.eventId ?? (Array.isArray(record.pushDropFields) ? record.pushDropFields[1] : ''),
+      provenance: record.provenance?.length ? record.provenance : [record.lastTransferTx]
+    }))
+}
 
 // QR Modal for displaying ticket QR code
 const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ ticket, onClose }) => {
@@ -263,6 +302,7 @@ const TicketCard: React.FC<{
 }> = ({ ticket, onViewQR, onRedeem, onCopyOutpoint, onTransfer, onListForSale, onFeedback, onRefund }) => {
   const isActive = ticket.status === "VALID"
   const isRedeemed = ticket.status === "REDEEMED"
+  const resaleAllowed = ticket.policy?.resaleAllowed !== false
 
   const formatValidityWindow = () => {
     const startDate = new Date(ticket.validFrom)
@@ -288,13 +328,13 @@ const TicketCard: React.FC<{
         </div>
         <StatusBadge status={ticket.status} />
       </div>
-      
+
       <div className="space-y-2 mb-4 text-sm">
         <div className="text-neo-contrast/70">
           <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}
           {formatValidityWindow()}
         </div>
-        
+
         <div className="text-neo-contrast/70">
           <span className="font-mono text-xs text-neo-contrast/50">OUTPOINT:</span>{' '}
           <button
@@ -306,11 +346,20 @@ const TicketCard: React.FC<{
             <Copy className="w-3 h-3" />
           </button>
         </div>
-        
+
         {ticket.priceInSats && (
           <div className="text-neo-contrast/70">
             <span className="font-mono text-xs text-neo-contrast/50">PAID:</span>{' '}
             <span className="font-mono">{ticket.priceInSats.toLocaleString()} sats</span>
+          </div>
+        )}
+
+        {ticket.policy && (
+          <div className="text-xs font-mono text-neo-contrast/60 space-y-1 border border-neo-border/10 rounded-md p-2">
+            <div className="uppercase text-neo-contrast/40">Policy</div>
+            <div>Resale: {resaleAllowed ? 'Allowed' : 'Disabled'}</div>
+            <div>Royalty: {(ticket.policy.royaltyBps / 100).toFixed(2)}%</div>
+            <div>Issuer: {ticket.policy.issuerId}</div>
           </div>
         )}
       </div>
@@ -335,16 +384,24 @@ const TicketCard: React.FC<{
 
             <button
               onClick={onTransfer}
-              className="flex items-center justify-center h-12 w-12 bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white font-mono text-sm font-bold transition-all rounded-md"
+              className={`flex items-center justify-center h-12 w-12 bg-transparent text-white border-2 font-mono text-sm font-bold transition-all rounded-md ${
+                resaleAllowed ? 'hover:bg-white hover:text-black border-white/25 hover:border-white' : 'border-white/10 text-white/30 cursor-not-allowed'
+              }`}
               aria-label="Transfer ticket"
+              disabled={!resaleAllowed}
+              title={resaleAllowed ? 'Transfer ticket' : 'Resale disabled by issuer'}
             >
               <Send className="w-4 h-4" />
             </button>
 
             <button
               onClick={onListForSale}
-              className="flex items-center justify-center h-12 w-12 bg-transparent text-white hover:bg-white hover:text-black border-2 border-white/25 hover:border-white font-mono text-sm font-bold transition-all rounded-md"
+              className={`flex items-center justify-center h-12 w-12 bg-transparent text-white border-2 font-mono text-sm font-bold transition-all rounded-md ${
+                resaleAllowed ? 'hover:bg-white hover:text-black border-white/25 hover:border-white' : 'border-white/10 text-white/30 cursor-not-allowed'
+              }`}
               aria-label="List for sale"
+              disabled={!resaleAllowed}
+              title={resaleAllowed ? 'List for compliant resale' : 'Resale disabled by issuer'}
             >
               <DollarSign className="w-4 h-4" />
             </button>
@@ -405,7 +462,9 @@ const TicketSkeleton: React.FC = () => (
 
 // Main Tickets Page Component
 const Tickets = () => {
-  const [persistedTickets, setPersistedTickets] = useTickets()
+  const [persistedTicketsRaw, setPersistedTicketsRaw] = useTickets()
+  const persistedTickets: Ticket[] = normalizeTickets(persistedTicketsRaw as any[])
+  const setPersistedTickets = setPersistedTicketsRaw as unknown as React.Dispatch<React.SetStateAction<Ticket[]>>
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [transferModal, setTransferModal] = useState<{isOpen: boolean; ticket: Ticket | null}>({
@@ -429,12 +488,39 @@ const Tickets = () => {
   const { announce } = useAnnouncements()
   
   // Combine mock and persisted tickets
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  
+  const [tickets, setTickets] = useState<Ticket[]>([...mockTickets, ...persistedTickets])
+
   useEffect(() => {
-    const combinedTickets = [...mockTickets, ...persistedTickets]
+    try {
+      const ledgerRaw = window.localStorage.getItem('ticketBastardLedger')
+      const ledger: TicketLedgerEntry[] = ledgerRaw ? JSON.parse(ledgerRaw) : []
+      let changed = false
+      mockTickets.forEach((ticket) => {
+        if (!ledger.find((entry) => entry.ticketId === ticket.id)) {
+          ledger.push({
+            ticketId: ticket.id,
+            eventId: ticket.eventId,
+            outpoint: ticket.outpoint,
+            tx: ticket.lastTransferTx,
+            policy: ticket.policy,
+            policyJson: ticket.policyJson,
+            issuerSignature: ticket.issuerSignature
+          })
+          changed = true
+        }
+      })
+      if (changed) {
+        window.localStorage.setItem('ticketBastardLedger', JSON.stringify(ledger))
+      }
+    } catch (error) {
+      console.error('Failed to seed ledger', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    const combinedTickets = [...mockTickets, ...normalizeTickets(persistedTicketsRaw as any[])]
     setTickets(combinedTickets)
-  }, [persistedTickets])
+  }, [persistedTicketsRaw])
 
   useEffect(() => {
     // Simulate loading
@@ -448,24 +534,29 @@ const Tickets = () => {
 
   const handleRedeem = (ticket: Ticket) => {
     // Update ticket status to redeemed
-    setTickets(prev => prev.map(t => 
-      t.id === ticket.id 
+    setTickets(prev => prev.map(t =>
+      t.id === ticket.id
         ? { ...t, status: 'REDEEMED' as const }
         : t
     ))
-    
+
     // Update persisted tickets only (not mock data)
-    setPersistedTickets(prev => prev.map(t => 
-      t.id === ticket.id 
+    setPersistedTickets(prev => prev.map(t =>
+      t.id === ticket.id
         ? { ...t, status: 'REDEEMED' as const }
         : t
     ))
-    
+
     announce(`${ticket.eventName} ticket has been redeemed`)
     toast({
       title: "Ticket Redeemed",
       description: `${ticket.eventName} ticket has been redeemed`
     })
+  }
+
+  const deriveSellerLockingScript = (ticket: Ticket) => {
+    const normalized = ticket.id.replace(/[^0-9a-f]/gi, '').padEnd(40, '0').slice(0, 40)
+    return `76a914${normalized}88ac`
   }
 
   const handleCopyOutpoint = async (ticket: Ticket) => {
@@ -481,10 +572,26 @@ const Tickets = () => {
   }
 
   const handleTransfer = (ticket: Ticket) => {
+    if (ticket.policy?.resaleAllowed === false) {
+      toast({
+        title: 'Transfer blocked',
+        description: 'The issuer has disabled secondary transfers for this ticket.'
+      })
+      return
+    }
+
     setTransferModal({ isOpen: true, ticket })
   }
 
   const handleListForSale = (ticket: Ticket) => {
+    if (ticket.policy?.resaleAllowed === false) {
+      toast({
+        title: 'Resale disabled',
+        description: 'The issuer forbids resales for this ticket.'
+      })
+      return
+    }
+
     setSaleModal({ isOpen: true, ticket })
   }
 
@@ -496,34 +603,67 @@ const Tickets = () => {
     setRefundModal({ isOpen: true, ticket })
   }
 
-  const handleTransferConfirm = (recipientAddress: string) => {
+  const handleTransferConfirm = (transferResult: ResaleBuildResult, recipientAddress: string) => {
     if (!transferModal.ticket) return
-    
+
     // Remove ticket from current user's wallet
     setTickets(prev => prev.filter(t => t.id !== transferModal.ticket!.id))
-    
+
     // Update persisted tickets only (not mock data)
     setPersistedTickets(prev => prev.filter(t => t.id !== transferModal.ticket!.id))
-    
+
+    try {
+      const ledgerRaw = window.localStorage.getItem('ticketBastardLedger')
+      const ledger: TicketLedgerEntry[] = ledgerRaw ? JSON.parse(ledgerRaw) : []
+      ledger.push({
+        ticketId: transferModal.ticket.id,
+        eventId: transferModal.ticket.eventId ?? (Array.isArray(transferModal.ticket.pushDropFields) ? transferModal.ticket.pushDropFields[1] : ''),
+        outpoint: `${transferResult.tx.txid}:0`,
+        tx: transferResult.tx,
+        policy: transferModal.ticket.policy,
+        policyJson: transferModal.ticket.policyJson,
+        issuerSignature: transferModal.ticket.issuerSignature
+      })
+      window.localStorage.setItem('ticketBastardLedger', JSON.stringify(ledger))
+    } catch (error) {
+      console.error('Failed to persist transfer ledger entry', error)
+    }
+
     toast({
       title: "Ticket Transferred",
       description: `Transferred to ${recipientAddress.slice(0, 8)}...`
     })
   }
 
-  const handleSaleConfirm = (priceInSats: number) => {
+  const handleSaleConfirm = (result: ResaleBuildResult) => {
     if (!saleModal.ticket) return
-    
+
     // Remove ticket from wallet and add to marketplace
     setTickets(prev => prev.filter(t => t.id !== saleModal.ticket!.id))
-    
-    // Update localStorage  
-    const updatedTickets = tickets.filter(t => t.id !== saleModal.ticket!.id)
-    localStorage.setItem('ticketBastardTickets', JSON.stringify(updatedTickets.filter(t => !mockTickets.find(m => m.id === t.id))))
-    
+
+    // Update localStorage
+    setPersistedTickets(prev => prev.filter(t => t.id !== saleModal.ticket!.id))
+
+    try {
+      const listingsRaw = window.localStorage.getItem('ticketBastardListings')
+      const listings = listingsRaw ? JSON.parse(listingsRaw) : []
+      listings.push({
+        ticketId: saleModal.ticket.id,
+        eventId: saleModal.ticket.eventId ?? (Array.isArray(saleModal.ticket.pushDropFields) ? saleModal.ticket.pushDropFields[1] : ''),
+        tx: result.tx,
+        policy: saleModal.ticket.policy,
+        policyJson: saleModal.ticket.policyJson,
+        royaltyOutputs: result.royaltyOutputs,
+        sellerOutput: result.sellerOutput
+      })
+      window.localStorage.setItem('ticketBastardListings', JSON.stringify(listings))
+    } catch (error) {
+      console.error('Failed to persist listing preview', error)
+    }
+
     toast({
       title: "Listed for Sale",
-      description: `Listed at ${priceInSats.toLocaleString()} sats`
+      description: `Listed at ${result.tx.salePriceSats.toLocaleString()} sats`
     })
   }
 
@@ -636,8 +776,10 @@ const Tickets = () => {
         onConfirm={handleTransferConfirm}
         ticketId={transferModal.ticket?.id || ''}
         eventName={transferModal.ticket?.eventName || ''}
+        policy={transferModal.ticket?.policy || basePolicy}
+        sellerLockingScriptHex={transferModal.ticket ? deriveSellerLockingScript(transferModal.ticket) : ''}
       />
-      
+
       {/* List for Sale Modal */}
       <ListForSaleModal
         isOpen={saleModal.isOpen}
@@ -646,6 +788,8 @@ const Tickets = () => {
         ticketId={saleModal.ticket?.id || ''}
         eventName={saleModal.ticket?.eventName || ''}
         originalPrice={saleModal.ticket?.priceInSats || 0}
+        policy={saleModal.ticket?.policy || basePolicy}
+        sellerLockingScriptHex={saleModal.ticket ? deriveSellerLockingScript(saleModal.ticket) : ''}
       />
 
       {/* Feedback Modal */}

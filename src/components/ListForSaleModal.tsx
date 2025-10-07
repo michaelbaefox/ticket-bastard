@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { TicketPolicy, ResaleBuildResult } from '@/types/ticketing';
+import { buildResaleOutputs } from '@/lib/ticketing';
 
 interface ListForSaleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (priceInSats: number) => void;
+  onConfirm: (result: ResaleBuildResult) => void;
   ticketId: string;
   eventName: string;
   originalPrice: number;
+  policy: TicketPolicy;
+  sellerLockingScriptHex: string;
 }
 
 export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
@@ -20,23 +24,46 @@ export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
   onConfirm,
   ticketId,
   eventName,
-  originalPrice
+  originalPrice,
+  policy,
+  sellerLockingScriptHex
 }) => {
   const [priceInSats, setPriceInSats] = useState(originalPrice.toString());
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  const listingFee = Math.floor(parseFloat(priceInSats) * 0.025 || 0);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPriceInSats(originalPrice.toString());
+    }
+  }, [isOpen, originalPrice]);
+
+  const salePrice = Number(priceInSats) || 0;
+  const buyerLockingScriptHex = useMemo(() => {
+    const randomHex = Math.random().toString(16).slice(2, 42).padEnd(40, '0').slice(0, 40);
+    return `76a914${randomHex}88ac`;
+  }, [isOpen]);
+
+  const buildResult = useMemo(() => {
+    if (!salePrice) return null;
+    return buildResaleOutputs({
+      salePriceSats: salePrice,
+      sellerPayLockingScriptHex: sellerLockingScriptHex,
+      buyerTicketLockingScriptHex: buyerLockingScriptHex,
+      policy
+    });
+  }, [salePrice, policy, sellerLockingScriptHex, buyerLockingScriptHex]);
+
+  const listingFee = Math.floor(salePrice * 0.025 || 0);
   const networkFee = 400;
-  const artistVenueShare = Math.floor(parseFloat(priceInSats) * 0.10 || 0);
-  
+  const royaltyDue = buildResult?.royaltyTotal ?? 0;
+
   const handleConfirm = async () => {
-    const price = parseFloat(priceInSats);
-    if (!price || price <= 0) return;
-    
+    if (!buildResult) return;
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    onConfirm(price);
+
+    onConfirm(buildResult);
     setIsProcessing(false);
     onClose();
   };
@@ -68,32 +95,44 @@ export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
               min="1"
             />
           </div>
-          
+
           <Separator className="bg-neo-contrast/20" />
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Royalty ({(policy.royaltyBps / 100).toFixed(2)}%)</span>
+              <span>{royaltyDue.toLocaleString()} sats</span>
+            </div>
+            <div className="flex justify-between">
               <span>Listing Fee (2.5%)</span>
               <span>{listingFee.toLocaleString()} sats</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between">
               <span>Network Fee</span>
               <span>{networkFee.toLocaleString()} sats</span>
-            </div>
-            <div className="flex justify-between text-sm text-neo-contrast/60">
-              <span>Artist/Venue Share (10%)</span>
-              <span>{artistVenueShare.toLocaleString()} sats</span>
             </div>
             <Separator className="bg-neo-contrast/20" />
             <div className="flex justify-between font-bold">
               <span>You Receive</span>
-              <span>{(parseFloat(priceInSats) - listingFee - networkFee || 0).toLocaleString()} sats</span>
+              <span>{Math.max(salePrice - royaltyDue - listingFee - networkFee, 0).toLocaleString()} sats</span>
             </div>
           </div>
-          
+
+          {buildResult && (
+            <div className="text-xs text-neo-contrast/60 font-mono space-y-2">
+              <div className="uppercase tracking-wide text-neo-contrast/40">Royalty Split</div>
+              {buildResult.royaltyOutputs.length ? buildResult.royaltyOutputs.map((output, idx) => (
+                <div key={`${output.lockingScript}-${idx}`} className="flex justify-between">
+                  <span>{policy.royaltyRecipients[idx]?.id ?? `Recipient ${idx + 1}`}</span>
+                  <span>{output.satoshis.toLocaleString()} sats</span>
+                </div>
+              )) : <div>No royalty due</div>}
+            </div>
+          )}
+
           <div className="text-xs text-neo-contrast/60 font-mono">
-            ✓ Fair resale market - no scalping<br/>
-            ✓ Artist/venue gets share automatically<br/>
+            ✓ Policy-enforced royalties<br/>
+            ✓ Split payouts included in transaction<br/>
             ✓ Instant payout on sale
           </div>
         </div>
@@ -110,7 +149,7 @@ export const ListForSaleModal: React.FC<ListForSaleModalProps> = ({
           <Button
             variant="neo"
             onClick={handleConfirm}
-            disabled={isProcessing || !parseFloat(priceInSats)}
+            disabled={isProcessing || !buildResult}
             className="flex-1"
           >
             {isProcessing ? 'LISTING...' : 'LIST FOR SALE'}

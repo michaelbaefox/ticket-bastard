@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AntiBot from './AntiBot';
+import { TicketPolicy, ResaleBuildResult } from '@/types/ticketing';
+import { buildResaleOutputs } from '@/lib/ticketing';
 
 interface TransferModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (recipientAddress: string) => void;
+  onConfirm: (result: ResaleBuildResult, recipientAddress: string) => void;
   ticketId: string;
   eventName: string;
+  policy: TicketPolicy;
+  sellerLockingScriptHex: string;
 }
 
 export const TransferModal: React.FC<TransferModalProps> = ({
@@ -19,29 +23,46 @@ export const TransferModal: React.FC<TransferModalProps> = ({
   onClose,
   onConfirm,
   ticketId,
-  eventName
+  eventName,
+  policy,
+  sellerLockingScriptHex
 }) => {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showAntiBot, setShowAntiBot] = useState(false);
-  
+
   const networkFee = 300;
 
+  const buyerLockingScriptHex = useMemo(() => {
+    if (!recipientAddress) return '';
+    const normalized = recipientAddress.replace(/[^0-9a-f]/gi, '').padEnd(40, '0').slice(0, 40);
+    return `76a914${normalized}88ac`;
+  }, [recipientAddress]);
+
+  const transferPreview = useMemo(() => {
+    if (!buyerLockingScriptHex) return null;
+    return buildResaleOutputs({
+      salePriceSats: 0,
+      policy,
+      sellerPayLockingScriptHex: sellerLockingScriptHex,
+      buyerTicketLockingScriptHex: buyerLockingScriptHex
+    });
+  }, [buyerLockingScriptHex, policy, sellerLockingScriptHex]);
+
   const handleConfirm = async () => {
-    if (!recipientAddress.trim()) return;
-    
-    // Check if anti-bot verification is needed
-    const needsVerification = Math.random() < 0.4; // 40% chance for demo
-    
+    if (!recipientAddress.trim() || !transferPreview) return;
+
+    const needsVerification = Math.random() < 0.4;
+
     if (needsVerification && !showAntiBot) {
       setShowAntiBot(true);
       return;
     }
-    
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    onConfirm(recipientAddress);
+
+    onConfirm(transferPreview, recipientAddress);
     setIsProcessing(false);
     setRecipientAddress('');
     setShowAntiBot(false);
@@ -84,9 +105,9 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 className="font-mono text-sm bg-transparent border-neo-border/25 text-neo-contrast"
               />
             </div>
-            
+
             <Separator className="bg-neo-contrast/20" />
-            
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Transfer Fee</span>
@@ -96,6 +117,11 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 <span>Network Fee</span>
                 <span>{networkFee.toLocaleString()} sats</span>
               </div>
+              {transferPreview && (
+                <div className="text-xs text-neo-contrast/60 font-mono">
+                  Ticket UTXO will move to buyer with new PushDrop policy.
+                </div>
+              )}
               <Separator className="bg-neo-contrast/20" />
               <div className="flex justify-between font-bold">
                 <span>Total Cost</span>
@@ -123,7 +149,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             <Button
               variant="neo"
               onClick={handleConfirm}
-              disabled={isProcessing || !recipientAddress.trim()}
+              disabled={isProcessing || !recipientAddress.trim() || !transferPreview}
               className="flex-1"
             >
               {isProcessing ? 'TRANSFERRING...' : 'TRANSFER'}
