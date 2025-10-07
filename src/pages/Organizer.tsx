@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Shuffle, Calendar, DollarSign } from 'lucide-react';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 // Types
 type OrganizerEvent = {
@@ -96,6 +100,111 @@ const mockEvents: OrganizerEvent[] = [
   }
 ];
 
+const bitcoinAddressRegex = /^((bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62})$/;
+
+const eventFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Event name is required")
+    .max(120, "Event name must be 120 characters or less"),
+  eventId: z
+    .string()
+    .trim()
+    .min(6, "Event ID is required"),
+  venue: z
+    .string()
+    .trim()
+    .max(120, "Venue must be 120 characters or less")
+    .optional()
+    .or(z.literal('')),
+  startsAt: z
+    .string()
+    .min(1, "Start time is required"),
+  endsAt: z
+    .string()
+    .min(1, "End time is required"),
+  capacity: z
+    .string()
+    .trim()
+    .min(1, "Capacity is required")
+    .refine((val) => /^\d+$/.test(val), { message: "Capacity must be a whole number" })
+    .refine((val) => {
+      const num = Number(val);
+      return num >= 1 && num <= 100000;
+    }, { message: "Capacity must be between 1 and 100,000" }),
+  price: z
+    .string()
+    .trim()
+    .min(1, "Price is required")
+    .refine((val) => /^\d+$/.test(val), { message: "Price must be a whole number" })
+    .refine((val) => {
+      const num = Number(val);
+      return num >= 1 && num <= 100000000;
+    }, { message: "Price must be between 1 and 100,000,000 sats" }),
+  protocolAddr: z
+    .string()
+    .trim()
+    .min(10, "Protocol address is required")
+    .refine((val) => bitcoinAddressRegex.test(val), { message: "Enter a valid Bitcoin address" }),
+  venueSink: z
+    .string()
+    .trim()
+    .min(10, "Venue sink address is required")
+    .refine((val) => bitcoinAddressRegex.test(val), { message: "Enter a valid Bitcoin address" }),
+}).superRefine((data, ctx) => {
+  const start = new Date(data.startsAt);
+  const end = new Date(data.endsAt);
+
+  if (Number.isNaN(start.getTime())) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['startsAt'],
+      message: "Start time must be a valid date",
+    });
+    return;
+  }
+
+  if (start <= new Date()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['startsAt'],
+      message: "Start time must be in the future",
+    });
+  }
+
+  if (Number.isNaN(end.getTime())) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['endsAt'],
+      message: "End time must be a valid date",
+    });
+    return;
+  }
+
+  if (end <= start) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['endsAt'],
+      message: "End time must be after the start time",
+    });
+  }
+});
+
+type EventFormValues = z.infer<typeof eventFormSchema>;
+
+const eventFormDefaults: EventFormValues = {
+  name: '',
+  eventId: '',
+  venue: '',
+  startsAt: '',
+  endsAt: '',
+  capacity: '',
+  price: '',
+  protocolAddr: '',
+  venueSink: ''
+};
+
 const Organizer = () => {
   const [events, setEvents] = useState<OrganizerEvent[]>(mockEvents);
   const [query, setQuery] = useState<OrganizerQuery>({ page: 1, perPage: 10 });
@@ -105,26 +214,34 @@ const Organizer = () => {
   const [loading, setLoading] = useState(false);
   const [density, setDensity] = useState<'compact' | 'normal'>('normal');
   const [autoGenerateId, setAutoGenerateId] = useState(true);
-
-  // Create event form state
-  const [newEvent, setNewEvent] = useState({
-    name: '',
-    eventId: '',
-    venue: '',
-    startsAt: '',
-    endsAt: '',
-    capacity: '',
-    price: '',
-    protocolAddr: '',
-    venueSink: ''
+  const createEventForm = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
+    defaultValues: eventFormDefaults,
+    mode: 'onSubmit'
   });
+  const watchedEventName = createEventForm.watch('name');
+  const watchedStartTime = createEventForm.watch('startsAt');
+  const { isSubmitted } = createEventForm.formState;
 
   useEffect(() => {
-    if (autoGenerateId && newEvent.name) {
-      const id = `evt_${Date.now()}_${newEvent.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)}`;
-      setNewEvent(prev => ({ ...prev, eventId: id }));
+    if (!autoGenerateId) return;
+
+    const shouldValidate = isSubmitted;
+    const name = watchedEventName?.trim();
+    if (!name) {
+      createEventForm.setValue('eventId', '', { shouldValidate, shouldDirty: false });
+      return;
     }
-  }, [newEvent.name, autoGenerateId]);
+
+    const sanitized = name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8);
+    if (!sanitized) {
+      createEventForm.setValue('eventId', '', { shouldValidate, shouldDirty: false });
+      return;
+    }
+
+    const generatedId = `evt_${Date.now()}_${sanitized}`;
+    createEventForm.setValue('eventId', generatedId, { shouldValidate, shouldDirty: false });
+  }, [autoGenerateId, watchedEventName, createEventForm, isSubmitted]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const newQuery: OrganizerQuery = { page: 1, perPage: 10 };
@@ -225,53 +342,20 @@ const Organizer = () => {
       events.reduce((sum, e) => sum + e.redeemed, 0) / events.reduce((sum, e) => sum + e.sold, 0) : 0
   };
 
-  const handleCreateEvent = () => {
-    // Validation
-    if (!newEvent.name || !newEvent.eventId || !newEvent.startsAt || !newEvent.endsAt || 
-        !newEvent.capacity || !newEvent.price || !newEvent.protocolAddr || !newEvent.venueSink) {
-      toast({ description: "Please fill in all required fields", variant: "destructive" });
-      return;
-    }
-
-    // Time validation
-    const startDate = new Date(newEvent.startsAt);
-    const endDate = new Date(newEvent.endsAt);
-    const now = new Date();
-
-    if (startDate <= now) {
-      toast({ description: "Start time must be in the future", variant: "destructive" });
-      return;
-    }
-
-    if (endDate <= startDate) {
-      toast({ description: "End time must be after start time", variant: "destructive" });
-      return;
-    }
-
-    // Numeric validation
-    const capacity = parseInt(newEvent.capacity);
-    const price = parseInt(newEvent.price);
-
-    if (capacity <= 0 || capacity > 100000) {
-      toast({ description: "Capacity must be between 1 and 100,000", variant: "destructive" });
-      return;
-    }
-
-    if (price <= 0 || price > 100000000) {
-      toast({ description: "Price must be between 1 and 100,000,000 sats", variant: "destructive" });
-      return;
-    }
+  const handleCreateEvent = createEventForm.handleSubmit((values) => {
+    const capacity = Number(values.capacity);
+    const price = Number(values.price);
 
     const event: OrganizerEvent = {
-      eventId: newEvent.eventId,
-      name: newEvent.name,
-      venue: newEvent.venue,
-      startsAtISO: newEvent.startsAt,
-      endsAtISO: newEvent.endsAt,
+      eventId: values.eventId.trim(),
+      name: values.name.trim(),
+      venue: values.venue?.trim() || '',
+      startsAtISO: values.startsAt,
+      endsAtISO: values.endsAt,
       capacity,
       priceSats: price,
-      protocolAddr: newEvent.protocolAddr,
-      venueSink: newEvent.venueSink,
+      protocolAddr: values.protocolAddr.trim(),
+      venueSink: values.venueSink.trim(),
       salesOpen: true,
       sold: 0,
       redeemed: 0,
@@ -280,15 +364,12 @@ const Organizer = () => {
 
     setEvents(prev => [...prev, event]);
     setShowCreateModal(false);
-    setNewEvent({
-      name: '', eventId: '', venue: '', startsAt: '', endsAt: '',
-      capacity: '', price: '', protocolAddr: '', venueSink: ''
+    toast({
+      description: `Event created • id ${truncateMiddle(event.eventId)}`
     });
-    
-    toast({ 
-      description: `Event created • id ${truncateMiddle(event.eventId)}` 
-    });
-  };
+    createEventForm.reset(eventFormDefaults);
+    setAutoGenerateId(true);
+  });
 
   const exportToCSV = () => {
     const headers = ['Event ID', 'Name', 'Venue', 'Start Date', 'End Date', 'Capacity', 'Sold', 'Revenue (sats)', 'Status'];
@@ -361,14 +442,14 @@ const Organizer = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <h1 className="text-3xl font-bold uppercase">ORGANIZER</h1>
-          <Button 
-            variant="neo" 
+          <Button
+            variant="neo"
             onClick={() => setShowCreateModal(true)}
-            className="font-mono uppercase"
+            className="font-mono uppercase w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             [ + CREATE EVENT ]
@@ -402,21 +483,21 @@ const Organizer = () => {
         {/* Toolbar */}
         <div className="space-y-4 mb-6 p-4 border border-white/20 rounded-md">
           {/* First Row */}
-          <div className="flex flex-wrap gap-4">
-            <div className="relative">
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+            <div className="relative md:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
               <Input
                 placeholder="Search events..."
                 value={query.q || ''}
                 onChange={(e) => updateURL({ ...query, q: e.target.value })}
-                className="pl-10 font-mono w-64"
+                className="pl-10 font-mono w-full md:w-64"
               />
             </div>
-            
+
             <select
               value={query.status || ''}
               onChange={(e) => updateURL({ ...query, status: e.target.value as any })}
-              className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm"
+              className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm w-full md:w-auto"
             >
               <option value="">All Status</option>
               <option value="upcoming">Upcoming</option>
@@ -428,12 +509,12 @@ const Organizer = () => {
               placeholder="Venue filter..."
               value={query.venue || ''}
               onChange={(e) => updateURL({ ...query, venue: e.target.value })}
-              className="font-mono w-40"
+              className="font-mono w-full md:w-40"
             />
 
-            <Button 
-              variant="neo-outline" 
-              className="font-mono uppercase text-xs"
+            <Button
+              variant="neo-outline"
+              className="font-mono uppercase text-xs w-full md:w-auto"
               onClick={exportToCSV}
             >
               <Download className="w-3 h-3 mr-1" />
@@ -442,15 +523,15 @@ const Organizer = () => {
           </div>
 
           {/* Second Row */}
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:flex-row md:items-center">
               <DollarSign className="w-4 h-4 text-white/60" />
               <Input
                 placeholder="Min price"
                 type="number"
                 value={query.min || ''}
                 onChange={(e) => updateURL({ ...query, min: e.target.value ? parseInt(e.target.value) : undefined })}
-                className="font-mono w-24"
+                className="font-mono w-full sm:w-24"
               />
               <span className="text-white/60">-</span>
               <Input
@@ -458,32 +539,32 @@ const Organizer = () => {
                 type="number"
                 value={query.max || ''}
                 onChange={(e) => updateURL({ ...query, max: e.target.value ? parseInt(e.target.value) : undefined })}
-                className="font-mono w-24"
+                className="font-mono w-full sm:w-24"
               />
               <span className="text-xs text-white/60 font-mono">sats</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:flex-row md:items-center">
               <Calendar className="w-4 h-4 text-white/60" />
               <Input
                 type="date"
                 value={query.from || ''}
                 onChange={(e) => updateURL({ ...query, from: e.target.value })}
-                className="font-mono w-36"
+                className="font-mono w-full sm:w-36"
               />
               <span className="text-white/60">-</span>
               <Input
                 type="date"
                 value={query.to || ''}
                 onChange={(e) => updateURL({ ...query, to: e.target.value })}
-                className="font-mono w-36"
+                className="font-mono w-full sm:w-36"
               />
             </div>
 
             <select
               value={query.perPage || 10}
               onChange={(e) => updateURL({ ...query, perPage: parseInt(e.target.value), page: 1 })}
-              className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm"
+              className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm w-full md:w-auto"
             >
               <option value={5}>5 per page</option>
               <option value={10}>10 per page</option>
@@ -493,9 +574,8 @@ const Organizer = () => {
 
             <Button
               variant="neo-outline"
-              size="sm"
               onClick={() => setDensity(density === 'compact' ? 'normal' : 'compact')}
-              className="font-mono uppercase text-xs"
+              className="font-mono uppercase text-xs w-full md:w-auto"
             >
               {density === 'compact' ? 'NORMAL' : 'COMPACT'}
             </Button>
@@ -503,7 +583,7 @@ const Organizer = () => {
         </div>
 
         {/* Events Table */}
-        <div className="border border-white/20 rounded-md overflow-hidden">
+        <div className="hidden md:block border border-white/20 rounded-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b border-white/20">
@@ -543,55 +623,114 @@ const Organizer = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredEvents.map((event) => (
-                  <tr 
-                    key={event.eventId}
-                    className={`border-b border-white/20 hover:bg-white/5 cursor-pointer ${density === 'compact' ? '' : ''}`}
-                    onClick={() => {
-                      setSelectedEvent(event);
-                      setShowDrawer(true);
-                    }}
-                  >
-                    <td className={density === 'compact' ? 'p-2' : 'p-4'}>
-                      <div className="font-semibold">{event.name}</div>
-                      <div className="text-xs font-mono text-white/60">
-                        {formatWindow(event.startsAtISO, event.endsAtISO)}
-                      </div>
+                {filteredEvents.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="p-6 text-center text-sm font-mono text-white/60"
+                    >
+                      No events match the current filters.
                     </td>
-                    <td className={`text-sm ${density === 'compact' ? 'p-2' : 'p-4'}`}>{event.venue || '—'}</td>
-                    <td className={density === 'compact' ? 'p-2' : 'p-4'}>
-                      <div className="font-mono">{formatNumber(event.sold)} / {formatNumber(event.capacity)}</div>
-                      <div className="text-xs text-white/60">{pct(event.sold / event.capacity)} filled</div>
-                    </td>
-                    <td className={`font-mono ${density === 'compact' ? 'p-2' : 'p-4'}`}>{formatNumber(event.revenueSats)} sats</td>
-                    <td className={density === 'compact' ? 'p-2' : 'p-4'}>{getStatusPill(event)}</td>
                   </tr>
-                ))}
+                ) : (
+                  filteredEvents.map((event) => (
+                    <tr
+                      key={event.eventId}
+                      className={`border-b border-white/20 hover:bg-white/5 cursor-pointer ${density === 'compact' ? '' : ''}`}
+                      onClick={() => {
+                        setSelectedEvent(event);
+                        setShowDrawer(true);
+                      }}
+                    >
+                      <td className={density === 'compact' ? 'p-2' : 'p-4'}>
+                        <div className="font-semibold">{event.name}</div>
+                        <div className="text-xs font-mono text-white/60">
+                          {formatWindow(event.startsAtISO, event.endsAtISO)}
+                        </div>
+                      </td>
+                      <td className={`text-sm ${density === 'compact' ? 'p-2' : 'p-4'}`}>{event.venue || '—'}</td>
+                      <td className={density === 'compact' ? 'p-2' : 'p-4'}>
+                        <div className="font-mono">{formatNumber(event.sold)} / {formatNumber(event.capacity)}</div>
+                        <div className="text-xs text-white/60">{pct(event.sold / event.capacity)} filled</div>
+                      </td>
+                      <td className={`font-mono ${density === 'compact' ? 'p-2' : 'p-4'}`}>{formatNumber(event.revenueSats)} sats</td>
+                      <td className={density === 'compact' ? 'p-2' : 'p-4'}>{getStatusPill(event)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
+        {/* Events Cards (Mobile) */}
+        <div className="space-y-3 md:hidden">
+          {filteredEvents.length === 0 && (
+            <div className="border border-white/20 rounded-md p-4 bg-white/5 text-white/70 text-sm font-mono text-center">
+              No events match the current filters.
+            </div>
+          )}
+
+          {filteredEvents.map((event) => (
+            <button
+              key={event.eventId}
+              type="button"
+              onClick={() => {
+                setSelectedEvent(event);
+                setShowDrawer(true);
+              }}
+              className="w-full text-left border border-white/20 rounded-lg bg-white/5 p-4 space-y-3 focus:outline-none focus:ring-2 focus:ring-neo-cyan"
+            >
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-base">{event.name}</span>
+                  {getStatusPill(event)}
+                </div>
+                <div className="text-xs font-mono text-white/60">
+                  {formatWindow(event.startsAtISO, event.endsAtISO)}
+                </div>
+                <div className="text-sm text-white/70">
+                  <span className="font-mono text-white/60">Venue:</span>{' '}
+                  {event.venue || '—'}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <div className="font-mono text-sm">{formatNumber(event.sold)} / {formatNumber(event.capacity)}</div>
+                  <div className="text-xs text-white/60">{pct(event.sold / event.capacity)} filled</div>
+                </div>
+                <div>
+                  <div className="font-mono text-sm">{formatNumber(event.revenueSats)} sats</div>
+                  <div className="text-xs text-white/60">Revenue</div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
         {/* Pagination */}
-        <div className="flex justify-between items-center mt-6">
-          <div className="text-sm text-white/60 font-mono">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-6">
+          <div className="text-sm text-white/60 font-mono text-center sm:text-left">
             Showing {startIndex + 1}-{Math.min(startIndex + perPage, totalEvents)} of {totalEvents} events
           </div>
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="neo-outline" 
-              size="sm" 
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              variant="neo-outline"
+              size="icon"
               disabled={currentPage === 1}
               onClick={() => updateURL({ ...query, page: currentPage - 1 })}
+              aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <span className="font-mono text-sm">PAGE {currentPage} OF {totalPages}</span>
-            <Button 
-              variant="neo-outline" 
-              size="sm" 
+            <Button
+              variant="neo-outline"
+              size="icon"
               disabled={currentPage === totalPages}
               onClick={() => updateURL({ ...query, page: currentPage + 1 })}
+              aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -608,26 +747,28 @@ const Organizer = () => {
                 <DrawerTitle className="font-mono uppercase">{selectedEvent?.name}</DrawerTitle>
                 <div className="mt-2">{selectedEvent && getStatusPill(selectedEvent)}</div>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm"
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowDrawer(false)}
+                aria-label="Close details"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </DrawerHeader>
-          
+
           {selectedEvent && (
             <div className="p-6 space-y-6">
               {/* Meta */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm">{truncateMiddle(selectedEvent.eventId)}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => copyToClipboard(selectedEvent.eventId, 'Event ID')}
+                    aria-label="Copy event id"
                   >
                     <Copy className="w-3 h-3" />
                   </Button>
@@ -639,7 +780,7 @@ const Organizer = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="text-lg font-bold">{formatNumber(selectedEvent.sold)} / {formatNumber(selectedEvent.capacity)}</div>
                   <div className="text-xs text-white/60 font-mono uppercase">SOLD / CAPACITY</div>
@@ -678,16 +819,16 @@ const Organizer = () => {
 
               {/* Quick Actions */}
               <div className="space-y-2">
-                <Button 
-                  variant="neo-outline" 
+                <Button
+                  variant="neo-outline"
                   className="w-full font-mono uppercase"
                   onClick={() => copyToClipboard(selectedEvent.eventId, 'Event ID')}
                 >
                   [ COPY EVENT ID ]
                 </Button>
                 {selectedEvent.salesOpen && (
-                  <Button 
-                    variant="neo" 
+                  <Button
+                    variant="neo"
                     className="w-full font-mono uppercase"
                     onClick={() => handleCloseSales(selectedEvent.eventId)}
                   >
@@ -708,161 +849,239 @@ const Organizer = () => {
       </Drawer>
 
       {/* Create Event Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+      <Dialog
+        open={showCreateModal}
+        onOpenChange={(open) => {
+          setShowCreateModal(open);
+          if (!open) {
+            createEventForm.reset(eventFormDefaults);
+            setAutoGenerateId(true);
+          }
+        }}
+      >
         <DialogContent className="bg-black border-white/20 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="font-mono uppercase">CREATE EVENT</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-mono mb-1">Event Name *</label>
-              <Input
-                value={newEvent.name}
-                onChange={(e) => {
-                  setNewEvent({ ...newEvent, name: e.target.value });
-                  if (autoGenerateId && e.target.value) {
-                    const id = `evt_${Date.now()}_${e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)}`;
-                    setNewEvent(prev => ({ ...prev, eventId: id }));
-                  }
-                }}
-                placeholder="Bitcoin Conference 2025"
-                className="font-mono"
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-mono mb-1 flex items-center gap-2">
-                Event ID *
-                <label className="flex items-center gap-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoGenerateId}
-                    onChange={(e) => {
-                      setAutoGenerateId(e.target.checked);
-                      if (e.target.checked && newEvent.name) {
-                        const id = `evt_${Date.now()}_${newEvent.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)}`;
-                        setNewEvent({ ...newEvent, eventId: id });
-                      }
-                    }}
-                    className="w-3 h-3"
-                  />
-                  <span className="text-xs text-white/60">Auto-generate</span>
-                </label>
-              </label>
-              <Input
-                value={newEvent.eventId}
-                onChange={(e) => setNewEvent({ ...newEvent, eventId: e.target.value })}
-                placeholder="evt_1234567890abcdef"
-                className="font-mono"
-                disabled={autoGenerateId}
+          <Form {...createEventForm}>
+            <form onSubmit={handleCreateEvent} className="space-y-4">
+              <FormField
+                control={createEventForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event Name *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Bitcoin Conference 2025"
+                        className="font-mono"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <div className="text-xs text-white/60 mt-1">Unique identifier for this event</div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-mono mb-1">Venue</label>
-              <Input
-                value={newEvent.venue}
-                onChange={(e) => setNewEvent({ ...newEvent, venue: e.target.value })}
-                placeholder="Convention Center"
-                className="font-mono"
+              <FormField
+                control={createEventForm.control}
+                name="eventId"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between gap-4">
+                      <FormLabel className="mb-0">Event ID *</FormLabel>
+                      <label className="flex items-center gap-1 cursor-pointer text-xs text-white/60">
+                        <input
+                          type="checkbox"
+                          checked={autoGenerateId}
+                          onChange={(e) => {
+                            setAutoGenerateId(e.target.checked);
+                            if (!e.target.checked) {
+                              createEventForm.setValue('eventId', field.value, { shouldDirty: true });
+                            }
+                          }}
+                          className="w-3 h-3"
+                        />
+                        <span>Auto-generate</span>
+                      </label>
+                    </div>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="evt_1234567890abcdef"
+                        className="font-mono"
+                        disabled={autoGenerateId}
+                      />
+                    </FormControl>
+                    <FormDescription>Unique identifier for this event</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-mono mb-1">Start Time *</label>
-                <Input
-                  type="datetime-local"
-                  value={newEvent.startsAt}
-                  onChange={(e) => setNewEvent({ ...newEvent, startsAt: e.target.value })}
-                  className="font-mono"
-                  min={new Date().toISOString().slice(0, 16)}
+              <FormField
+                control={createEventForm.control}
+                name="venue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Venue</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Convention Center"
+                        className="font-mono"
+                      />
+                    </FormControl>
+                    <FormDescription>Optional — helps guests identify the location.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={createEventForm.control}
+                  name="startsAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Time *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="datetime-local"
+                          className="font-mono"
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                      </FormControl>
+                      <FormDescription>Must be in the future</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <div className="text-xs text-white/60 mt-1">Must be in the future</div>
-              </div>
-              <div>
-                <label className="block text-sm font-mono mb-1">End Time *</label>
-                <Input
-                  type="datetime-local"
-                  value={newEvent.endsAt}
-                  onChange={(e) => setNewEvent({ ...newEvent, endsAt: e.target.value })}
-                  className="font-mono"
-                  min={newEvent.startsAt}
+                <FormField
+                  control={createEventForm.control}
+                  name="endsAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Time *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="datetime-local"
+                          className="font-mono"
+                          min={watchedStartTime || undefined}
+                        />
+                      </FormControl>
+                      <FormDescription>Must be after start time</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <div className="text-xs text-white/60 mt-1">Must be after start time</div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-mono mb-1">Capacity *</label>
-                <Input
-                  type="number"
-                  value={newEvent.capacity}
-                  onChange={(e) => setNewEvent({ ...newEvent, capacity: e.target.value })}
-                  placeholder="500"
-                  className="font-mono"
-                  min="1"
-                  max="100000"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={createEventForm.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capacity *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          inputMode="numeric"
+                          placeholder="500"
+                          className="font-mono"
+                        />
+                      </FormControl>
+                      <FormDescription>Max 100,000 attendees</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <div className="text-xs text-white/60 mt-1">Max 100,000 attendees</div>
-              </div>
-              <div>
-                <label className="block text-sm font-mono mb-1">Price (sats) *</label>
-                <Input
-                  type="number"
-                  value={newEvent.price}
-                  onChange={(e) => setNewEvent({ ...newEvent, price: e.target.value })}
-                  placeholder="50000"
-                  className="font-mono"
-                  min="1"
-                  max="100000000"
+                <FormField
+                  control={createEventForm.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price (sats) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          inputMode="numeric"
+                          placeholder="50000"
+                          className="font-mono"
+                        />
+                      </FormControl>
+                      <FormDescription>Max 100M sats</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <div className="text-xs text-white/60 mt-1">Max 100M sats</div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-mono mb-1">Protocol Address *</label>
-              <Input
-                value={newEvent.protocolAddr}
-                onChange={(e) => setNewEvent({ ...newEvent, protocolAddr: e.target.value })}
-                placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
-                className="font-mono"
+              <FormField
+                control={createEventForm.control}
+                name="protocolAddr"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Protocol Address *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+                        className="font-mono"
+                      />
+                    </FormControl>
+                    <FormDescription>Bitcoin address for protocol fees</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <div className="text-xs text-white/60 mt-1">Bitcoin address for protocol fees</div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-mono mb-1">Venue Sink Address *</label>
-              <Input
-                value={newEvent.venueSink}
-                onChange={(e) => setNewEvent({ ...newEvent, venueSink: e.target.value })}
-                placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
-                className="font-mono"
+              <FormField
+                control={createEventForm.control}
+                name="venueSink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Venue Sink Address *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+                        className="font-mono"
+                      />
+                    </FormControl>
+                    <FormDescription>Bitcoin address for venue payouts</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <div className="text-xs text-white/60 mt-1">Bitcoin address for venue payouts</div>
-            </div>
 
-            <div className="flex gap-4 pt-4">
-              <Button 
-                variant="neo" 
-                onClick={handleCreateEvent}
-                className="flex-1 font-mono uppercase"
-              >
-                [ CREATE EVENT ]
-              </Button>
-              <Button 
-                variant="neo-outline" 
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 font-mono uppercase"
-              >
-                [ CANCEL ]
-              </Button>
-            </div>
-          </div>
+              <div className="flex flex-col-reverse gap-3 pt-4 md:flex-row md:gap-4">
+                <Button
+                  type="button"
+                  variant="neo-outline"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    createEventForm.reset(eventFormDefaults);
+                    setAutoGenerateId(true);
+                  }}
+                  className="flex-1 font-mono uppercase"
+                >
+                  [ CANCEL ]
+                </Button>
+                <Button
+                  type="submit"
+                  variant="neo"
+                  className="flex-1 font-mono uppercase"
+                >
+                  [ CREATE EVENT ]
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
