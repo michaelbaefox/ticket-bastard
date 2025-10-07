@@ -369,15 +369,31 @@ const Organizer = () => {
     const newQuery: OrganizerQuery = { page: 1, perPage: 10 };
     
     if (params.get('q')) newQuery.q = params.get('q')!;
-    if (params.get('status')) newQuery.status = params.get('status') as any;
-    if (params.get('venue')) newQuery.venue = params.get('venue')!;
-    if (params.get('min')) newQuery.min = parseInt(params.get('min')!);
-    if (params.get('max')) newQuery.max = parseInt(params.get('max')!);
-    if (params.get('from')) newQuery.from = params.get('from')!;
-    if (params.get('to')) newQuery.to = params.get('to')!;
-    if (params.get('sort')) newQuery.sort = params.get('sort') as any;
-    if (params.get('page')) newQuery.page = parseInt(params.get('page')!) || 1;
-    if (params.get('perPage')) newQuery.perPage = parseInt(params.get('perPage')!) || 10;
+    const statusParam = params.get('status');
+    if (statusParam === 'upcoming' || statusParam === 'live' || statusParam === 'ended') {
+      newQuery.status = statusParam;
+    }
+    const venueParam = params.get('venue');
+    const minParam = params.get('min');
+    const maxParam = params.get('max');
+    const fromParam = params.get('from');
+    const toParam = params.get('to');
+
+    if (venueParam) newQuery.venue = venueParam;
+    if (minParam) newQuery.min = Number.parseInt(minParam, 10);
+    if (maxParam) newQuery.max = Number.parseInt(maxParam, 10);
+    if (fromParam) newQuery.from = fromParam;
+    if (toParam) newQuery.to = toParam;
+    const sortParam = params.get('sort');
+    const sortValues: OrganizerQuery['sort'][] = ['date_asc', 'date_desc', 'sold_desc', 'revenue_desc', 'fill_desc'];
+    if (sortParam && sortValues.includes(sortParam as OrganizerQuery['sort'])) {
+      newQuery.sort = sortParam as OrganizerQuery['sort'];
+    }
+    const pageParam = params.get('page');
+    const perPageParam = params.get('perPage');
+
+    if (pageParam) newQuery.page = Number.parseInt(pageParam, 10) || 1;
+    if (perPageParam) newQuery.perPage = Number.parseInt(perPageParam, 10) || 10;
     
     setQuery(newQuery);
   }, []);
@@ -660,7 +676,17 @@ const Organizer = () => {
 
             <select
               value={query.status || ''}
-              onChange={(e) => updateURL({ ...query, status: e.target.value as any })}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value === '') {
+                  updateURL({ ...query, status: undefined });
+                  return;
+                }
+
+                if (value === 'upcoming' || value === 'live' || value === 'ended') {
+                  updateURL({ ...query, status: value });
+                }
+              }}
               className="px-3 py-2 bg-black border border-white/20 rounded-md font-mono text-sm w-full md:w-auto"
             >
               <option value="">All Status</option>

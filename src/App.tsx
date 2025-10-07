@@ -4,6 +4,7 @@ import { Shield, ShoppingCart, BarChart3, Home, Ticket, Wallet, Menu, X } from '
 import { Button } from './components/ui/button'
 import { Toaster as ShadcnToaster } from './components/ui/toaster'
 import { AccessibilityProvider } from './components/AccessibilityProvider'
+import ticketbastardHomeButton from './assets/ticketbastard-home-button.svg'
 
 export default function App({ children }: { children: React.ReactNode }) {
   const location = useLocation()
@@ -12,6 +13,7 @@ export default function App({ children }: { children: React.ReactNode }) {
   const [isDesktop, setIsDesktop] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement | null>(null)
   const hasOpenedMenuRef = useRef(false)
+  const showHomeButton = pathname !== '/'
 
   const navItems = [
     { path: '/marketplace', label: 'Marketplace', icon: ShoppingCart },
@@ -74,9 +76,21 @@ export default function App({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-sm border-b border-white/10">
           <div className="mx-auto px-6 py-4 max-w-[1280px]">
             <div className="flex justify-between items-center gap-6">
-              <Link to="/" className="flex items-center space-x-3" aria-label="TicketBastard Home">
-                <img src="/ticketbastard-logo.svg" alt="TicketBastard" className="block w-auto shrink-0" style={{ height: '48px', paddingTop: '8px', paddingBottom: '8px' }} />
-              </Link>
+              <div className="flex items-center min-h-[48px]">
+                {showHomeButton && (
+                  <Link
+                    to="/"
+                    className="flex items-center no-underline"
+                    aria-label="TicketBastard Home"
+                  >
+                    <img
+                      src={ticketbastardHomeButton}
+                      alt="TicketBastard Home"
+                      className="block h-12 w-auto shrink-0"
+                    />
+                  </Link>
+                )}
+              </div>
 
                 {/* Desktop Navigation */}
                 {isDesktop && (

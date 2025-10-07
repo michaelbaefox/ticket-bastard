@@ -5,6 +5,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { AlertTriangle, X, RefreshCw } from 'lucide-react';
 
+const refundReasons = ['event_cancelled', 'venue_issue', 'personal', 'technical', 'other'] as const;
+type RefundReason = (typeof refundReasons)[number];
+
 type RefundModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -13,8 +16,11 @@ type RefundModalProps = {
   priceSats: number;
 };
 
+const isRefundReason = (value: string): value is RefundReason =>
+  (refundReasons as readonly string[]).includes(value);
+
 const RefundModal = ({ isOpen, onClose, ticketId, eventName, priceSats }: RefundModalProps) => {
-  const [reason, setReason] = useState<'event_cancelled' | 'venue_issue' | 'personal' | 'technical' | 'other'>('other');
+  const [reason, setReason] = useState<RefundReason>('other');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,12 +65,19 @@ const RefundModal = ({ isOpen, onClose, ticketId, eventName, priceSats }: Refund
     onClose();
   };
 
-  const reasonLabels = {
+  const reasonLabels: Record<RefundReason, string> = {
     event_cancelled: 'Event Cancelled',
     venue_issue: 'Venue Problems',
     personal: 'Personal Emergency',
     technical: 'Technical Issues',
     other: 'Other Reason'
+  };
+
+  const handleReasonChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    if (isRefundReason(value)) {
+      setReason(value);
+    }
   };
 
   return (
@@ -92,11 +105,11 @@ const RefundModal = ({ isOpen, onClose, ticketId, eventName, priceSats }: Refund
             <label className="block text-sm font-mono mb-2">Refund Reason *</label>
             <select
               value={reason}
-              onChange={(e) => setReason(e.target.value as any)}
+              onChange={handleReasonChange}
               className="w-full px-3 py-2 bg-neo-contrast-inverse border border-neo-border/20 rounded-md font-mono text-sm"
             >
-              {Object.entries(reasonLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+              {refundReasons.map((value) => (
+                <option key={value} value={value}>{reasonLabels[value]}</option>
               ))}
             </select>
           </div>

@@ -176,7 +176,7 @@ export default function Marketplace() {
   const [footerFlash, setFooterFlash] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [purchaseModal, setPurchaseModal] = useState<{isOpen: boolean; listing: MarketplaceListing | null}>({isOpen: false, listing: null})
-  const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; listing: any}>({isOpen: false, listing: null})
+  const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; listing: MarketplaceListing | null}>({isOpen: false, listing: null})
   const { toast } = useToast()
   const [tickets, setTickets] = useTickets()
   const { setFocus } = useFocusManagement()
@@ -206,7 +206,7 @@ export default function Marketplace() {
     setPurchaseModal({isOpen: true, listing})
   }
 
-  const handleFeedback = (listing: any) => {
+  const handleFeedback = (listing: MarketplaceListing) => {
     setFeedbackModal({isOpen: true, listing})
   }
 
@@ -536,7 +536,7 @@ export default function Marketplace() {
             setFocus()
           }}
           eventName={feedbackModal.listing.eventName}
-          eventId={feedbackModal.listing.id?.toString() || ''}
+          eventId={feedbackModal.listing.id.toString()}
         />
       )}
     </div>

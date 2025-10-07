@@ -88,9 +88,14 @@ const mockTickets: StoredTicket[] = [
 
 type Ticket = StoredTicket
 
-const normalizeTickets = (records: any[]): Ticket[] => {
+const normalizeTickets = <T extends Partial<Ticket>>(records: T[]): Ticket[] => {
   return records
-    .filter((record): record is Ticket => Boolean(record && record.policy && record.policyJson && record.lastTransferTx))
+    .filter((record): record is Ticket => Boolean(
+      record &&
+      record.policy &&
+      record.policyJson &&
+      record.lastTransferTx
+    ))
     .map((record) => ({
       ...record,
       eventId: record.eventId ?? (Array.isArray(record.pushDropFields) ? record.pushDropFields[1] : ''),
@@ -157,7 +162,8 @@ const QRModal: React.FC<{ ticket: Ticket | null; onClose: () => void }> = ({ tic
     setIsFullscreen(!isFullscreen)
     if (!isFullscreen && 'wakeLock' in navigator) {
       // Request wake lock to keep screen on during presentation
-      (navigator as any).wakeLock?.request?.('screen')
+      const nav = navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<unknown> } }
+      nav.wakeLock?.request?.('screen')
     }
   }
 
@@ -463,7 +469,7 @@ const TicketSkeleton: React.FC = () => (
 // Main Tickets Page Component
 const Tickets = () => {
   const [persistedTicketsRaw, setPersistedTicketsRaw] = useTickets()
-  const persistedTickets: Ticket[] = normalizeTickets(persistedTicketsRaw as any[])
+  const persistedTickets: Ticket[] = normalizeTickets(persistedTicketsRaw)
   const setPersistedTickets = setPersistedTicketsRaw as unknown as React.Dispatch<React.SetStateAction<Ticket[]>>
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
@@ -518,7 +524,7 @@ const Tickets = () => {
   }, [])
 
   useEffect(() => {
-    const combinedTickets = [...mockTickets, ...normalizeTickets(persistedTicketsRaw as any[])]
+    const combinedTickets = [...mockTickets, ...normalizeTickets(persistedTicketsRaw)]
     setTickets(combinedTickets)
   }, [persistedTicketsRaw])
 

@@ -54,7 +54,7 @@ export default function HeroSection() {
           <div className="basis-[58.3333%]">
             <div className="relative">
               <h1 className="text-[40px] font-extrabold leading-[1.15] tracking-[-0.005em]">
-                F** the system. <span className="text-neo-contrast/80">Own your tickets.</span>
+                F*** the system. <span className="text-neo-contrast/80">Own your tickets.</span>
               </h1>
               <p className="mt-4 text-[16px] leading-[26px] text-neo-contrast/70 max-w-[55ch]">Plain, portable, verifiable. No vendor lock‑in. No middlemen.</p>
 
