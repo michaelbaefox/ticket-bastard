@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowDown } from 'lucide-react'
+import tbLogo from '../assets/tb-logo.png'
 
 export default function HeroSection() {
   const [ctaAlt, setCtaAlt] = React.useState(false)
@@ -26,16 +27,8 @@ export default function HeroSection() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top navigation bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-sm border-b border-neo-border/10">
-        <div className="max-w-[1280px] mx-auto px-6 py-4 flex justify-end items-center gap-8 text-sm text-neo-contrast/70">
-          <Link to="/marketplace" className="hover:text-neo-contrast hover:underline underline-offset-4 transition-colors duration-200">Marketplace</Link>
-          <Link to="/tickets" className="hover:text-neo-contrast hover:underline underline-offset-4 transition-colors duration-200">My Tickets</Link>
-          <Link to="/venue" className="hover:text-neo-contrast hover:underline underline-offset-4 transition-colors duration-200">Venue</Link>
-          <Link to="/organizer" className="hover:text-neo-contrast hover:underline underline-offset-4 transition-colors duration-200">Organizer</Link>
-        </div>
-      </nav>
+    <div className="min-h-screen flex flex-col pt-24">
+      <div className="min-h-screen flex flex-col">
 
       {/* Subtle CRT/VHS background */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
@@ -43,13 +36,13 @@ export default function HeroSection() {
       </div>
 
       {/* Hero – two column layout */}
-      <section className="flex-1 flex items-center px-4 py-16 mt-16">
+      <section className="flex-1 flex items-center px-4 py-16">
         <div className="w-full max-w-[1280px] mx-auto flex flex-row items-center gap-20">
           {/* Left: logo */}
           <div className="basis-[41.6667%] shrink-0 relative overflow-hidden">
             <div aria-hidden className="pointer-events-none absolute -inset-4 opacity-[0.18] blur-2xl" style={{ background: 'radial-gradient(circle at 40% 20%, rgba(229,75,140,0.24), rgba(99,102,241,0.14) 40%, transparent 60%)' }} />
             <img
-              src="/tb-logo.png"
+              src={tbLogo}
               alt="TicketBastard — F*** the system. Scan the bastard."
               className="relative z-10 w-full max-w-[480px] h-auto select-none drop-shadow-neo-glow"
               style={{ imageRendering: 'crisp-edges' }}
@@ -154,6 +147,7 @@ export default function HeroSection() {
           </div>
         </div>
       </section>
+      </div>
     </div>
   )
 }
