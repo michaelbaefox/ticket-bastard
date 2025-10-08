@@ -131,7 +131,7 @@ export default function App({ children }: { children: React.ReactNode }) {
                       aria-controls="mobile-menu"
                       aria-haspopup="true"
                     >
-                      {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                      {isMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
                     </Button>
                   </div>
                 )}
