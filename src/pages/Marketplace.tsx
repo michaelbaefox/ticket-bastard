@@ -325,6 +325,14 @@ export default function Marketplace() {
     listing.eventName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const dateFormatter = useMemo(() => (
+    new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  ), [])
+
   const sortedListings = [...filteredListings].sort((a, b) => {
     switch (sortBy) {
       case 'price-asc':
@@ -502,7 +510,7 @@ export default function Marketplace() {
                   <div className="space-y-2 mb-4 text-sm">
                     <div className="text-neo-contrast/70">
                       <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}
-                      {new Date(listing.validFrom).toLocaleDateString()} - {new Date(listing.validTo).toLocaleDateString()}
+                      {dateFormatter.format(new Date(listing.validFrom))} - {dateFormatter.format(new Date(listing.validTo))}
                     </div>
                     
                     <div className="text-neo-contrast/70">

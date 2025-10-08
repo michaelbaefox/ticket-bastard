@@ -367,11 +367,17 @@ const TicketCard: React.FC<{
     const startDate = new Date(ticket.validFrom)
     const endDate = new Date(ticket.validTo)
     
+    const dateFormatter = new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+
     if (startDate.toDateString() === endDate.toDateString()) {
-      return `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      return `${dateFormatter.format(startDate)} ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
     }
     
-    return `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleDateString()} ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    return `${dateFormatter.format(startDate)} ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${dateFormatter.format(endDate)} ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   }
 
   return (

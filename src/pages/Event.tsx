@@ -28,6 +28,7 @@ const formatDateWindow = (startISO: string, endISO: string) => {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
+    year: 'numeric',
   });
 
   const timeFormatter = new Intl.DateTimeFormat(undefined, {

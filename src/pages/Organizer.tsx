@@ -34,7 +34,7 @@ function truncateMiddle(s: string, head = 6, tail = 4) {
 }
 
 function formatWindow(a: string, b: string) {
-  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" };
+  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" };
   return `${new Date(a).toLocaleString([], opts)} → ${new Date(b).toLocaleString([], opts)}`;
 }
 
