@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check, MessageCircle } from 'lucide-react'
 import { ScanlineOverlay } from '@/components/ScanlineOverlay'
 import { PurchaseModal } from '@/components/PurchaseModal'
@@ -10,15 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
-import { useTickets } from '@/hooks/useLocalStorage'
+import { useTickets, useEvents } from '@/hooks/useLocalStorage'
 import { useFocusManagement, useKeyboardNavigation, useAnnouncements } from '@/hooks/useAccessibility'
 import { TicketPolicy, TicketOnChain, StoredTicket, TicketLedgerEntry } from '@/types/ticketing'
 import { canonicalizePolicy, derivePolicySignature } from '@/lib/ticketing'
+import { getEventById } from '@/data/events'
 
 // Mock data for listings
 type MarketplaceListing = {
   id: number
   eventName: string
+  eventId: string
   validFrom: string
   validTo: string
   sellerOutpoint: string
@@ -28,6 +30,7 @@ type MarketplaceListing = {
   policy: TicketPolicy
   ticketTemplate: TicketOnChain
   issuerSignature?: string
+  imageUrl?: string
 }
 
 const policyA: TicketPolicy = {
@@ -89,6 +92,7 @@ const mockListings: MarketplaceListing[] = [
   {
     id: 1,
     eventName: 'CRYPTO PUNK FESTIVAL 2026',
+    eventId: 'evt_cryptopunk2026',
     validFrom: '2026-03-15T18:00:00Z',
     validTo: '2026-03-16T02:00:00Z',
     sellerOutpoint: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
@@ -111,6 +115,7 @@ const mockListings: MarketplaceListing[] = [
   {
     id: 2,
     eventName: 'UNDERGROUND BASS COLLECTIVE',
+    eventId: 'evt_underground',
     validFrom: '2026-03-20T20:00:00Z',
     validTo: '2026-03-21T04:00:00Z',
     sellerOutpoint: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
@@ -133,6 +138,7 @@ const mockListings: MarketplaceListing[] = [
   {
     id: 3,
     eventName: 'NEO-TOKYO NIGHT MARKET',
+    eventId: 'evt_neotokyo',
     validFrom: '2026-03-25T19:00:00Z',
     validTo: '2026-03-26T01:00:00Z',
     sellerOutpoint: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
@@ -179,8 +185,16 @@ export default function Marketplace() {
   const [feedbackModal, setFeedbackModal] = useState<{isOpen: boolean; listing: MarketplaceListing | null}>({isOpen: false, listing: null})
   const { toast } = useToast()
   const [tickets, setTickets] = useTickets()
+  const [events] = useEvents()
   const { setFocus } = useFocusManagement()
   const { announce } = useAnnouncements()
+
+  const eventImageById = useMemo(() => {
+    return events.reduce<Record<string, string | undefined>>((accumulator, event) => {
+      accumulator[event.eventId] = event.imageUrl
+      return accumulator
+    }, {})
+  }, [events])
 
   // Simulate loading
   useEffect(() => {
@@ -250,7 +264,17 @@ export default function Marketplace() {
     // Search functionality would go here
   }
 
-  const filteredListings = mockListings.filter(listing =>
+  const enrichedListings = useMemo(() => {
+    return mockListings.map((listing) => {
+      const matchedEvent = getEventById(events, listing.eventId)
+      return {
+        ...listing,
+        imageUrl: matchedEvent?.imageUrl ?? listing.imageUrl,
+      }
+    })
+  }, [events])
+
+  const filteredListings = enrichedListings.filter(listing =>
     listing.eventName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -392,9 +416,19 @@ export default function Marketplace() {
           </div>
           ) : (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} role="list" aria-label="Event listings">
-              {sortedListings.map((listing, index) => (
+              {sortedListings.map((listing) => (
                 <Card key={listing.id} className="bg-transparent border-neo-border/20 hover:border-neo-border/30 transition-colors focus-within:border-neo-border" role="listitem">
-                  <CardContent className="p-4">
+                  <div className="relative">
+                    <div className="aspect-video w-full overflow-hidden rounded-t-md bg-black">
+                      <img
+                        src={listing.imageUrl || '/placeholder.svg'}
+                        alt={`${listing.eventName} artwork`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  <CardContent className="p-4 space-y-4">
                     <h3 className="font-bold text-neo-contrast mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
                   
                   <div className="space-y-2 mb-4 text-sm">
@@ -463,7 +497,7 @@ export default function Marketplace() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+                </Card>
               ))}
             </div>
           )}
@@ -520,6 +554,7 @@ export default function Marketplace() {
         policy={purchaseModal.listing?.policy || policyA}
         ticketTemplate={purchaseModal.listing?.ticketTemplate || mockListings[0].ticketTemplate}
         issuerSignature={purchaseModal.listing?.issuerSignature}
+        eventImageUrl={purchaseModal.listing?.imageUrl}
       />
 
       {/* Feedback Modal */}

@@ -54,6 +54,7 @@ export type StoredTicket = {
   issuerSignature?: string;
   provenance: TicketTransaction[];
   lastTransferTx: TicketTransaction;
+  eventImageUrl?: string;
 };
 
 export type ResaleBuildParams = {

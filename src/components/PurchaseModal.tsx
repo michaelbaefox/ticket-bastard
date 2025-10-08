@@ -17,6 +17,7 @@ interface PurchaseModalProps {
   policy: TicketPolicy;
   ticketTemplate: TicketOnChain;
   issuerSignature?: string;
+  eventImageUrl?: string;
 }
 
 export const PurchaseModal: React.FC<PurchaseModalProps> = ({
@@ -28,7 +29,8 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
   seatLabel,
   policy,
   ticketTemplate,
-  issuerSignature
+  issuerSignature,
+  eventImageUrl
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showAntiBot, setShowAntiBot] = useState(false);
@@ -103,6 +105,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
       policy,
       policyJson,
       issuerSignature: signature,
+      eventImageUrl,
       provenance: [
         {
           txid,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,31 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Shuffle, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Calendar, DollarSign, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { TicketPolicy, RecipientShare } from '@/types/ticketing';
 import { canonicalizePolicy, derivePolicySignature } from '@/lib/ticketing';
-
-// Types
-type OrganizerEvent = {
-  eventId: string;
-  name: string;
-  venue?: string;
-  startsAtISO: string;
-  endsAtISO: string;
-  capacity: number;
-  priceSats: number;
-  protocolAddr: string;
-  venueSink: string;
-  salesOpen: boolean;
-  sold: number;
-  redeemed: number;
-  revenueSats: number;
-  policy: TicketPolicy;
-  policyJson: string;
-  issuerSignature?: string;
-};
+import { useEvents } from '@/hooks/useLocalStorage';
+import { EventRecord } from '@/data/events';
 
 type OrganizerQuery = {
   q?: string;
@@ -72,83 +54,8 @@ function getEventStatus(startsAtISO: string, endsAtISO: string): 'upcoming' | 'l
   return 'ended';
 }
 
-// Mock data
-const demoPolicyA: TicketPolicy = {
-  resaleAllowed: true,
-  royaltyBps: 750,
-  royaltyRecipients: [
-    { id: 'organizer', lockingScriptHex: '76a914c1a5cafe88ac', bps: 6000 },
-    { id: 'artist', lockingScriptHex: '76a914f00dbabe88ac', bps: 4000 }
-  ],
-  primaryRecipients: [
-    { id: 'organizer', lockingScriptHex: '76a914c1a5cafe88ac', bps: 5000 },
-    { id: 'venue', lockingScriptHex: '76a914deadbeef88ac', bps: 3000 },
-    { id: 'protocol', lockingScriptHex: '76a914feedface88ac', bps: 2000 }
-  ],
-  version: '1',
-  issuerId: 'btc_conf_issuer'
-};
-
-const demoPolicyAJson = canonicalizePolicy(demoPolicyA);
-const demoPolicyASignature = derivePolicySignature('evt_1234567890abcdef', 'template', demoPolicyAJson);
-
-const demoPolicyB: TicketPolicy = {
-  resaleAllowed: false,
-  royaltyBps: 0,
-  royaltyRecipients: [
-    { id: 'issuer', lockingScriptHex: '76a914facefeed88ac', bps: 10000 }
-  ],
-  primaryRecipients: [
-    { id: 'workshop', lockingScriptHex: '76a914f00dbabe88ac', bps: 7000 },
-    { id: 'venue', lockingScriptHex: '76a914deadbeef88ac', bps: 3000 }
-  ],
-  version: '1',
-  issuerId: 'ln_workshop_org'
-};
-
-const demoPolicyBJson = canonicalizePolicy(demoPolicyB);
-const demoPolicyBSignature = derivePolicySignature('evt_0987654321fedcba', 'template', demoPolicyBJson);
-
-const mockEvents: OrganizerEvent[] = [
-  {
-    eventId: "evt_1234567890abcdef",
-    name: "Bitcoin Conference 2025",
-    venue: "Convention Center",
-    startsAtISO: "2025-03-15T09:00:00Z",
-    endsAtISO: "2025-03-15T18:00:00Z",
-    capacity: 500,
-    priceSats: 50000,
-    protocolAddr: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    venueSink: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    salesOpen: true,
-    sold: 342,
-    redeemed: 89,
-    revenueSats: 17100000,
-    policy: demoPolicyA,
-    policyJson: demoPolicyAJson,
-    issuerSignature: demoPolicyASignature
-  },
-  {
-    eventId: "evt_0987654321fedcba",
-    name: "Lightning Workshop",
-    venue: "Tech Hub",
-    startsAtISO: "2025-02-10T14:00:00Z",
-    endsAtISO: "2025-02-10T17:00:00Z",
-    capacity: 100,
-    priceSats: 25000,
-    protocolAddr: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    venueSink: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    salesOpen: false,
-    sold: 100,
-    redeemed: 100,
-    revenueSats: 2500000,
-    policy: demoPolicyB,
-    policyJson: demoPolicyBJson,
-    issuerSignature: demoPolicyBSignature
-  }
-];
-
 const bitcoinAddressRegex = /^((bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62})$/;
+const fallbackEventImage = '/placeholder.svg';
 
 const eventFormSchema = z.object({
   name: z
@@ -282,9 +189,9 @@ const defaultRoyaltyRecipients: RecipientFormRow[] = [
 ];
 
 const Organizer = () => {
-  const [events, setEvents] = useState<OrganizerEvent[]>(mockEvents);
+  const [events, setEvents] = useEvents();
   const [query, setQuery] = useState<OrganizerQuery>({ page: 1, perPage: 10 });
-  const [selectedEvent, setSelectedEvent] = useState<OrganizerEvent | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -293,6 +200,9 @@ const Organizer = () => {
   const [primaryRecipients, setPrimaryRecipients] = useState<RecipientFormRow[]>(defaultPrimaryRecipients);
   const [royaltyRecipients, setRoyaltyRecipients] = useState<RecipientFormRow[]>(defaultRoyaltyRecipients);
   const [policyErrors, setPolicyErrors] = useState<{ primary?: string; royalty?: string }>({});
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const createEventForm = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: eventFormDefaults,
@@ -480,7 +390,41 @@ const Organizer = () => {
       events.reduce((sum, e) => sum + e.redeemed, 0) / events.reduce((sum, e) => sum + e.sold, 0) : 0
   };
 
-  const handleCreateEvent = createEventForm.handleSubmit((values) => {
+  const selectedEvent = selectedEventId ? events.find((event) => event.eventId === selectedEventId) ?? null : null;
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setImageError(null);
+      setUploadedImageUrl(null);
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setImageError('Upload a valid image file');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setUploadedImageUrl(reader.result);
+      }
+      setImageError(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setUploadedImageUrl(null);
+    setImageError(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  };
+
+  const handleCreateEvent = createEventForm.handleSubmit(async (values) => {
     const capacity = Number(values.capacity);
     const price = Number(values.price);
 
@@ -521,7 +465,7 @@ const Organizer = () => {
     const policyJson = canonicalizePolicy(policy);
     const issuerSignature = derivePolicySignature(values.eventId.trim(), 'template', policyJson);
 
-    const event: OrganizerEvent = {
+    const event: EventRecord = {
       eventId: values.eventId.trim(),
       name: values.name.trim(),
       venue: values.venue?.trim() || '',
@@ -537,7 +481,8 @@ const Organizer = () => {
       revenueSats: 0,
       policy,
       policyJson,
-      issuerSignature
+      issuerSignature,
+      imageUrl: uploadedImageUrl ?? undefined
     };
 
     setEvents(prev => [...prev, event]);
@@ -549,6 +494,7 @@ const Organizer = () => {
     setAutoGenerateId(true);
     setPrimaryRecipients(defaultPrimaryRecipients.map((row) => ({ ...row })));
     setRoyaltyRecipients(defaultRoyaltyRecipients.map((row) => ({ ...row })));
+    handleRemoveImage();
   });
 
   const exportToCSV = () => {
@@ -605,7 +551,7 @@ const Organizer = () => {
     setShowDrawer(false);
   };
 
-  const getStatusPill = (event: OrganizerEvent) => {
+  const getStatusPill = (event: EventRecord) => {
     const status = getEventStatus(event.startsAtISO, event.endsAtISO);
     const styles = {
       upcoming: "bg-neo-contrast/10 text-neo-contrast/70",
@@ -828,9 +774,19 @@ const Organizer = () => {
                       key={event.eventId}
                       className={`border-b border-white/20 hover:bg-white/5 cursor-pointer ${density === 'compact' ? '' : ''}`}
                       onClick={() => {
-                        setSelectedEvent(event);
+                        setSelectedEventId(event.eventId);
                         setShowDrawer(true);
                       }}
+                      onKeyDown={(keyboardEvent) => {
+                        if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+                          keyboardEvent.preventDefault();
+                          setSelectedEventId(event.eventId);
+                          setShowDrawer(true);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`View details for ${event.name}`}
                     >
                       <td className={density === 'compact' ? 'p-2' : 'p-4'}>
                         <div className="font-semibold">{event.name}</div>
@@ -866,10 +822,19 @@ const Organizer = () => {
               key={event.eventId}
               type="button"
               onClick={() => {
-                setSelectedEvent(event);
+                setSelectedEventId(event.eventId);
                 setShowDrawer(true);
               }}
+              onKeyDown={(keyboardEvent) => {
+                if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+                  keyboardEvent.preventDefault();
+                  setSelectedEventId(event.eventId);
+                  setShowDrawer(true);
+                }
+              }}
               className="w-full text-left border border-white/20 rounded-lg bg-white/5 p-4 space-y-3 focus:outline-none focus:ring-2 focus:ring-neo-cyan"
+              tabIndex={0}
+              aria-label={`View details for ${event.name}`}
             >
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -950,22 +915,37 @@ const Organizer = () => {
 
           {selectedEvent && (
             <div className="p-6 space-y-6">
-              {/* Meta */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm">{truncateMiddle(selectedEvent.eventId)}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(selectedEvent.eventId, 'Event ID')}
-                    aria-label="Copy event id"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </Button>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="w-full sm:w-56">
+                  <div className="relative aspect-video w-full overflow-hidden rounded-md border border-neo-border/20 bg-white/5">
+                    <img
+                      src={selectedEvent.imageUrl || fallbackEventImage}
+                      alt={`${selectedEvent.name} artwork`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 </div>
-                <div className="text-sm text-neo-contrast/60">{selectedEvent.venue}</div>
-                <div className="text-sm text-neo-contrast/60 font-mono">
-                  {formatWindow(selectedEvent.startsAtISO, selectedEvent.endsAtISO)}
+
+                <div className="flex-1 space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm">{truncateMiddle(selectedEvent.eventId)}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(selectedEvent.eventId, 'Event ID')}
+                        aria-label="Copy event id"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <div className="text-sm text-neo-contrast/60">{selectedEvent.venue}</div>
+                    <div className="text-sm text-neo-contrast/60 font-mono">
+                      {formatWindow(selectedEvent.startsAtISO, selectedEvent.endsAtISO)}
+                    </div>
+                  </div>
+
+                  <div>{getStatusPill(selectedEvent)}</div>
                 </div>
               </div>
 
@@ -1088,6 +1068,7 @@ const Organizer = () => {
             setPrimaryRecipients(defaultPrimaryRecipients.map((row) => ({ ...row })));
             setRoyaltyRecipients(defaultRoyaltyRecipients.map((row) => ({ ...row })));
             setPolicyErrors({});
+            handleRemoveImage();
           }
         }}
       >
@@ -1100,22 +1081,22 @@ const Organizer = () => {
             <Form {...createEventForm}>
               <form onSubmit={handleCreateEvent} className="space-y-4 pb-6">
                 <FormField
-                control={createEventForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Bitcoin Conference 2025"
-                        className="font-mono"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  control={createEventForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Name *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Bitcoin Conference 2025"
+                          className="font-mono"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
               <FormField
                 control={createEventForm.control}
@@ -1171,6 +1152,59 @@ const Organizer = () => {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-3 border border-white/10 rounded-md p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <FormLabel className="mb-0">Event Image</FormLabel>
+                    <p className="text-xs text-white/60 font-mono">Upload artwork to feature on marketplace and tickets.</p>
+                  </div>
+                  {uploadedImageUrl ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleRemoveImage}
+                      aria-label="Remove uploaded image"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="w-full sm:w-48">
+                    <div className="relative aspect-video w-full overflow-hidden rounded-md border border-white/15 bg-white/5">
+                      {uploadedImageUrl ? (
+                        <img
+                          src={uploadedImageUrl}
+                          alt="Event artwork preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-white/50">
+                          <ImageIcon className="w-10 h-10" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      aria-label="Upload event image"
+                      className="font-mono"
+                    />
+                    <p className="text-xs text-white/60 font-mono">PNG, JPG, or GIF up to 5MB.</p>
+                    {imageError ? (
+                      <p className="text-xs text-red-400 font-mono">{imageError}</p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField

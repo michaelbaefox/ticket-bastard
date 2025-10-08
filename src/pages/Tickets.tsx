@@ -15,6 +15,8 @@ import { useTickets } from '@/hooks/useLocalStorage'
 import { useFocusManagement, useAnnouncements } from '@/hooks/useAccessibility'
 import { StoredTicket, TicketPolicy, ResaleBuildResult, TicketLedgerEntry } from '@/types/ticketing'
 import { canonicalizePolicy, buildPrimarySaleOutputs, derivePolicySignature } from '@/lib/ticketing'
+import { useEvents } from '@/hooks/useLocalStorage'
+import { getEventById } from '@/data/events'
 
 const basePolicy: TicketPolicy = {
   resaleAllowed: true,
@@ -42,6 +44,7 @@ const mockTickets: StoredTicket[] = [
     id: 'mock_ticket_1',
     eventId: 'evt_cryptopunk2026',
     eventName: 'CRYPTO PUNK FESTIVAL 2026',
+    eventImageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=80',
     seat: 'Section 1, Row A',
     validFrom: '2026-03-15T18:00:00Z',
     validTo: '2026-03-16T02:00:00Z',
@@ -327,6 +330,14 @@ const TicketCard: React.FC<{
         ? 'border-green-500/30 bg-green-500/5 shadow-[0_0_20px_rgba(34,197,94,0.1)]' 
         : 'border-neo-border/20 bg-neo-contrast/5'
     }`}>
+      <div className="relative mb-4 rounded-md overflow-hidden">
+        <img
+          src={ticket.eventImageUrl || '/placeholder.svg'}
+          alt={`${ticket.eventName} artwork`}
+          className="h-40 w-full object-cover"
+        />
+      </div>
+
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <h3 className="font-bold text-neo-contrast mb-1">{ticket.eventName}</h3>
@@ -469,6 +480,7 @@ const TicketSkeleton: React.FC = () => (
 // Main Tickets Page Component
 const Tickets = () => {
   const [persistedTicketsRaw, setPersistedTicketsRaw] = useTickets()
+  const [events] = useEvents()
   const persistedTickets: Ticket[] = normalizeTickets(persistedTicketsRaw)
   const setPersistedTickets = setPersistedTicketsRaw as unknown as React.Dispatch<React.SetStateAction<Ticket[]>>
   const [isLoading, setIsLoading] = useState(true)
@@ -524,9 +536,21 @@ const Tickets = () => {
   }, [])
 
   useEffect(() => {
-    const combinedTickets = [...mockTickets, ...normalizeTickets(persistedTicketsRaw)]
+    const normalizedPersisted = normalizeTickets(persistedTicketsRaw).map((ticket) => {
+      if (ticket.eventImageUrl) {
+        return ticket
+      }
+
+      const matchedEvent = getEventById(events, ticket.eventId)
+      const fallback = mockTickets.find((mockTicket) => mockTicket.eventId === ticket.eventId)
+      return {
+        ...ticket,
+        eventImageUrl: matchedEvent?.imageUrl ?? fallback?.eventImageUrl,
+      }
+    })
+    const combinedTickets = [...mockTickets, ...normalizedPersisted]
     setTickets(combinedTickets)
-  }, [persistedTicketsRaw])
+  }, [persistedTicketsRaw, events])
 
   useEffect(() => {
     // Simulate loading
@@ -560,7 +584,7 @@ const Tickets = () => {
     })
   }
 
-  const deriveSellerLockingScript = (ticket: Ticket) => {
+const deriveSellerLockingScript = (ticket: Ticket) => {
     const normalized = ticket.id.replace(/[^0-9a-f]/gi, '').padEnd(40, '0').slice(0, 40)
     return `76a914${normalized}88ac`
   }
