@@ -6,6 +6,7 @@ import tbLogo from '../assets/tb-logo.png'
 export default function HeroSection() {
   const [ctaAlt, setCtaAlt] = React.useState(false)
   const [footerFlash, setFooterFlash] = React.useState<string | null>(null)
+  const statusMessage = footerFlash ?? ''
 
   const handleScrollHintKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (event) => {
     if (event.key !== 'Enter' && event.key !== ' ') {
@@ -119,9 +120,14 @@ export default function HeroSection() {
 
             {/* Sub-copy */}
             <p className="mt-6 text-xs md:text-sm font-mono tracking-[0.02em] text-neo-contrast/60">"You don't own your tickets. Venues do. Until now."</p>
-            {footerFlash && (
-              <p className="text-xs font-mono text-neo-contrast/40 mt-2" role="status" aria-live="polite">{footerFlash}</p>
-            )}
+            <p
+              className="text-xs font-mono text-neo-contrast/40 mt-2 min-h-[18px]"
+              role="status"
+              aria-live="polite"
+              aria-hidden={statusMessage === ''}
+            >
+              {statusMessage === '' ? ' ' : statusMessage}
+            </p>
           </div>
         </div>
       </section>
