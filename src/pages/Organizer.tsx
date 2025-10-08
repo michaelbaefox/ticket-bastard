@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Calendar, DollarSign, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Plus, Search, Copy, Download, X, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Calendar, DollarSign, Image as ImageIcon, Trash2, ExternalLink } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { TicketPolicy, RecipientShare } from '@/types/ticketing';
@@ -800,7 +800,30 @@ const Organizer = () => {
                         <div className="text-xs text-white/60">{pct(event.sold / event.capacity)} filled</div>
                       </td>
                       <td className={`font-mono ${density === 'compact' ? 'p-2' : 'p-4'}`}>{formatNumber(event.revenueSats)} sats</td>
-                      <td className={density === 'compact' ? 'p-2' : 'p-4'}>{getStatusPill(event)}</td>
+                    <td className={density === 'compact' ? 'p-2' : 'p-4'}>
+                      <div className="flex items-center gap-3">
+                        {getStatusPill(event)}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(clickEvent) => {
+                            clickEvent.stopPropagation();
+                            window.open(`/events/${event.eventId}`, '_blank', 'noopener,noreferrer');
+                          }}
+                          onKeyDown={(keyEvent) => {
+                            if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+                              keyEvent.preventDefault();
+                              keyEvent.stopPropagation();
+                              window.open(`/events/${event.eventId}`, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                          aria-label={`Open public page for ${event.name}`}
+                        >
+                          <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      </div>
+                    </td>
                     </tr>
                   ))
                 )}

@@ -3,7 +3,7 @@ import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check, Mes
 import { ScanlineOverlay } from '@/components/ScanlineOverlay'
 import { PurchaseModal } from '@/components/PurchaseModal'
 import FeedbackModal from '@/components/FeedbackModal'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -114,22 +114,22 @@ const mockListings: MarketplaceListing[] = [
   },
   {
     id: 2,
-    eventName: 'UNDERGROUND BASS COLLECTIVE',
-    eventId: 'evt_underground',
-    validFrom: '2026-03-20T20:00:00Z',
-    validTo: '2026-03-21T04:00:00Z',
+    eventName: 'BAZAAR BLOCK POP-UP',
+    eventId: 'evt_bazaar_block',
+    validFrom: '2025-09-20T10:00:00Z',
+    validTo: '2025-09-20T22:00:00Z',
     sellerOutpoint: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
     ticketOutpoint: 'tb1qrp33g0q4c70q3vqzm6q7n0y8q0szzrpqwu5sxw',
-    priceInSats: 75000,
-    seatLabel: 'Front Row',
+    priceInSats: 18000,
+    seatLabel: 'Market Floor Pass',
     policy: policyB,
     ticketTemplate: {
       protocolAddr: '1PushDropProtocolAddress',
-      eventId: 'evt_underground',
-      ticketId: 'tix_underground',
+      eventId: 'evt_bazaar_block',
+      ticketId: 'tix_bazaar',
       seatCiphertext: [54, 99, 201],
-      validFromISO: '2026-03-20T20:00:00Z',
-      validToISO: '2026-03-21T04:00:00Z',
+      validFromISO: '2025-09-20T10:00:00Z',
+      validToISO: '2025-09-20T22:00:00Z',
       policyJson: policyBJson,
       issuerSignature: policyBSignature
     },
@@ -157,6 +157,52 @@ const mockListings: MarketplaceListing[] = [
       issuerSignature: policyCSignature
     },
     issuerSignature: policyCSignature
+  },
+  {
+    id: 4,
+    eventName: 'SATELLITE SESSIONS VOL. 7',
+    eventId: 'evt_satellite_sessions',
+    validFrom: '2025-11-12T21:00:00Z',
+    validTo: '2025-11-13T04:00:00Z',
+    sellerOutpoint: 'bc1qeat7g5yx67p8c9k4n3v2u1z0wxy5ts4rvd0mna',
+    ticketOutpoint: 'tb1qfd6sr4c9sj3k0l8n2h5x1z7vy3w9a2t4c0m5pn',
+    priceInSats: 42000,
+    seatLabel: 'Loft Access',
+    policy: policyA,
+    ticketTemplate: {
+      protocolAddr: '1PushDropProtocolAddress',
+      eventId: 'evt_satellite_sessions',
+      ticketId: 'tix_satellite',
+      seatCiphertext: [14, 28, 77],
+      validFromISO: '2025-11-12T21:00:00Z',
+      validToISO: '2025-11-13T04:00:00Z',
+      policyJson: policyAJson,
+      issuerSignature: policyASignature
+    },
+    issuerSignature: policyASignature
+  },
+  {
+    id: 5,
+    eventName: 'ARCADE SPRINT HACKATHON',
+    eventId: 'evt_arcade_sprint',
+    validFrom: '2025-10-24T18:00:00Z',
+    validTo: '2025-10-26T18:00:00Z',
+    sellerOutpoint: 'bc1q9hx3m5kz4py8n7s2l1f3d6v0cwj5t8y9r0k2pa',
+    ticketOutpoint: 'tb1q7n6m5k4j3h2g1f0d9s8a7l6k5j4h3g2f1d0c9',
+    priceInSats: 21000,
+    seatLabel: 'Builder Pass',
+    policy: policyA,
+    ticketTemplate: {
+      protocolAddr: '1PushDropProtocolAddress',
+      eventId: 'evt_arcade_sprint',
+      ticketId: 'tix_arcade',
+      seatCiphertext: [101, 77, 45, 22],
+      validFromISO: '2025-10-24T18:00:00Z',
+      validToISO: '2025-10-26T18:00:00Z',
+      policyJson: policyAJson,
+      issuerSignature: policyASignature
+    },
+    issuerSignature: policyASignature
   }
 ]
 
@@ -188,6 +234,7 @@ export default function Marketplace() {
   const [events] = useEvents()
   const { setFocus } = useFocusManagement()
   const { announce } = useAnnouncements()
+  const navigate = useNavigate()
 
   const eventImageById = useMemo(() => {
     return events.reduce<Record<string, string | undefined>>((accumulator, event) => {
@@ -417,20 +464,41 @@ export default function Marketplace() {
           ) : (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} role="list" aria-label="Event listings">
               {sortedListings.map((listing) => (
-                <Card key={listing.id} className="bg-transparent border-neo-border/20 hover:border-neo-border/30 transition-colors focus-within:border-neo-border" role="listitem">
+                <Card
+                  key={listing.id}
+                  className="bg-transparent border-neo-border/20 hover:border-neo-border/30 transition-colors focus-within:border-neo-border"
+                  role="listitem"
+                >
                   <div className="relative">
-                    <div className="aspect-video w-full overflow-hidden rounded-t-md bg-black">
-                      <img
-                        src={listing.imageUrl || '/placeholder.svg'}
-                        alt={`${listing.eventName} artwork`}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
+                    <Link
+                      to={`/events/${listing.eventId}`}
+                      className="block focus:outline-none"
+                      aria-label={`View event page for ${listing.eventName}`}
+                    >
+                      <div className="relative">
+                        <div className="aspect-video w-full overflow-hidden rounded-t-md bg-black">
+                          <img
+                            src={listing.imageUrl || '/placeholder.svg'}
+                            alt={`${listing.eventName} artwork`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      </div>
+
+                      <CardContent className="p-4 space-y-4">
+                        <h3 className="font-bold text-neo-contrast mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
+                      </CardContent>
+                    </Link>
+                    <Link
+                      to={`/events/${listing.eventId}`}
+                      className="absolute inset-0"
+                      aria-hidden="true"
+                      tabIndex={-1}
+                    />
                   </div>
 
-                  <CardContent className="p-4 space-y-4">
-                    <h3 className="font-bold text-neo-contrast mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
-                  
+                  <CardContent className="pt-0 px-4 pb-4 space-y-4">
+
                   <div className="space-y-2 mb-4 text-sm">
                     <div className="text-neo-contrast/70">
                       <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}

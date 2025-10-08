@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { QrCode, Send, DollarSign, Copy, Download, Share, X, MessageCircle, RefreshCw } from 'lucide-react'
 import QRCode from 'qrcode'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ScanlineOverlay } from '@/components/ScanlineOverlay'
 import { TransferModal } from '@/components/TransferModal'
 import { ListForSaleModal } from '@/components/ListForSaleModal'
@@ -18,73 +18,122 @@ import { canonicalizePolicy, buildPrimarySaleOutputs, derivePolicySignature } fr
 import { useEvents } from '@/hooks/useLocalStorage'
 import { getEventById } from '@/data/events'
 
-const basePolicy: TicketPolicy = {
+const demoTicketPolicy: TicketPolicy = {
   resaleAllowed: true,
-  royaltyBps: 600,
+  royaltyBps: 650,
   royaltyRecipients: [
-    { id: 'artist', lockingScriptHex: '76a914aa11aa11aa11aa11aa11aa11aa11aa1188ac', bps: 7000 },
-    { id: 'venue', lockingScriptHex: '76a914bb22bb22bb22bb22bb22bb22bb22bb2288ac', bps: 3000 }
+    { id: 'organizer', lockingScriptHex: '76a914aa11aa11aa11aa11aa11aa11aa11aa1188ac', bps: 5000 },
+    { id: 'venue', lockingScriptHex: '76a914bb22bb22bb22bb22bb22bb22bb22bb2288ac', bps: 3000 },
+    { id: 'artist', lockingScriptHex: '76a914cc33cc33cc33cc33cc33cc33cc33cc3388ac', bps: 2000 }
   ],
   primaryRecipients: [
-    { id: 'organizer', lockingScriptHex: '76a914cc33cc33cc33cc33cc33cc33cc33cc3388ac', bps: 6000 },
-    { id: 'venue', lockingScriptHex: '76a914dd44dd44dd44dd44dd44dd44dd44dd4488ac', bps: 2500 },
-    { id: 'protocol', lockingScriptHex: '76a914ee55ee55ee55ee55ee55ee55ee55ee5588ac', bps: 1500 }
+    { id: 'organizer', lockingScriptHex: '76a914dd44dd44dd44dd44dd44dd44dd44dd4488ac', bps: 5500 },
+    { id: 'venue', lockingScriptHex: '76a914ee55ee55ee55ee55ee55ee55ee55ee5588ac', bps: 2500 },
+    { id: 'production', lockingScriptHex: '76a914ff66ff66ff66ff66ff66ff66ff66ff6688ac', bps: 1500 },
+    { id: 'protocol', lockingScriptHex: '76a9141166778899aabbccddeeff0011223344556688ac', bps: 500 }
   ],
   version: '1',
-  issuerId: 'demo_issuer'
+  issuerId: 'demo_ticket_issuer'
 }
 
-const basePolicyJson = canonicalizePolicy(basePolicy)
-const basePrimaryOutputs = buildPrimarySaleOutputs(50000, basePolicy)
-const baseSignature = derivePolicySignature('evt_cryptopunk2026', 'mock_ticket_1', basePolicyJson)
+const demoPolicyJson = canonicalizePolicy(demoTicketPolicy)
+const demoPrimaryOutputs = buildPrimarySaleOutputs(50000, demoTicketPolicy)
+const demoSignature = derivePolicySignature('evt_satellite_sessions', 'mock_ticket_satellite', demoPolicyJson)
 
 // Mock data for demonstration
 const mockTickets: StoredTicket[] = [
   {
-    id: 'mock_ticket_1',
-    eventId: 'evt_cryptopunk2026',
-    eventName: 'CRYPTO PUNK FESTIVAL 2026',
-    eventImageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=80',
-    seat: 'Section 1, Row A',
-    validFrom: '2026-03-15T18:00:00Z',
-    validTo: '2026-03-16T02:00:00Z',
-    outpoint: 'tx_mock_1:0',
+    id: 'mock_ticket_satellite',
+    eventId: 'evt_satellite_sessions',
+    eventName: 'SATELLITE SESSIONS VOL. 7',
+    eventImageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
+    seat: 'Loft Platform A2',
+    validFrom: '2025-11-12T21:00:00Z',
+    validTo: '2025-11-13T04:00:00Z',
+    outpoint: 'tx_mock_satellite:0',
     status: 'VALID',
-    priceInSats: 50000,
+    priceInSats: 42000,
     pushDropFields: [
       '1PushDropProtocolAddress',
-      'evt_cryptopunk2026',
-      'mock_ticket_1',
-      [12, 4, 210, 33],
-      '2026-03-15T18:00:00Z',
-      '2026-03-16T02:00:00Z',
-      basePolicyJson,
-      baseSignature
+      'evt_satellite_sessions',
+      'mock_ticket_satellite',
+      [14, 28, 77],
+      '2025-11-12T21:00:00Z',
+      '2025-11-13T04:00:00Z',
+      demoPolicyJson,
+      demoSignature
     ],
-    policy: basePolicy,
-    policyJson: basePolicyJson,
-    issuerSignature: baseSignature,
+    policy: demoTicketPolicy,
+    policyJson: demoPolicyJson,
+    issuerSignature: demoSignature,
     provenance: [
       {
-        txid: 'tx_mock_1',
-        salePriceSats: 50000,
+        txid: 'tx_mock_satellite',
+        salePriceSats: 42000,
         outputs: [
           { lockingScript: '76a914buyer00000000000000000000000000000088ac', satoshis: 1, outputDescription: 'Ticket output' },
-          ...basePrimaryOutputs
+          ...demoPrimaryOutputs
         ],
         type: 'primary',
-        timestampISO: '2026-01-01T00:00:00Z'
+        timestampISO: '2025-10-01T00:00:00Z'
       }
     ],
     lastTransferTx: {
-      txid: 'tx_mock_1',
-      salePriceSats: 50000,
+      txid: 'tx_mock_satellite',
+      salePriceSats: 42000,
       outputs: [
         { lockingScript: '76a914buyer00000000000000000000000000000088ac', satoshis: 1, outputDescription: 'Ticket output' },
-        ...basePrimaryOutputs
+        ...demoPrimaryOutputs
       ],
       type: 'primary',
-      timestampISO: '2026-01-01T00:00:00Z'
+      timestampISO: '2025-10-01T00:00:00Z'
+    }
+  },
+  {
+    id: 'mock_ticket_arcade',
+    eventId: 'evt_arcade_sprint',
+    eventName: 'ARCADE SPRINT HACKATHON',
+    eventImageUrl: 'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+    seat: 'Pod C – Workstation 7',
+    validFrom: '2025-10-24T18:00:00Z',
+    validTo: '2025-10-26T18:00:00Z',
+    outpoint: 'tx_mock_arcade:0',
+    status: 'VALID',
+    priceInSats: 21000,
+    pushDropFields: [
+      '1PushDropProtocolAddress',
+      'evt_arcade_sprint',
+      'mock_ticket_arcade',
+      [101, 77, 45, 22],
+      '2025-10-24T18:00:00Z',
+      '2025-10-26T18:00:00Z',
+      demoPolicyJson,
+      demoSignature
+    ],
+    policy: demoTicketPolicy,
+    policyJson: demoPolicyJson,
+    issuerSignature: demoSignature,
+    provenance: [
+      {
+        txid: 'tx_mock_arcade',
+        salePriceSats: 21000,
+        outputs: [
+          { lockingScript: '76a914builder000000000000000000000000000088ac', satoshis: 1, outputDescription: 'Ticket output' },
+          ...demoPrimaryOutputs
+        ],
+        type: 'primary',
+        timestampISO: '2025-09-10T00:00:00Z'
+      }
+    ],
+    lastTransferTx: {
+      txid: 'tx_mock_arcade',
+      salePriceSats: 21000,
+      outputs: [
+        { lockingScript: '76a914builder000000000000000000000000000088ac', satoshis: 1, outputDescription: 'Ticket output' },
+        ...demoPrimaryOutputs
+      ],
+      type: 'primary',
+      timestampISO: '2025-09-10T00:00:00Z'
     }
   }
 ]
@@ -308,7 +357,8 @@ const TicketCard: React.FC<{
   onListForSale: () => void
   onFeedback: () => void
   onRefund: () => void
-}> = ({ ticket, onViewQR, onRedeem, onCopyOutpoint, onTransfer, onListForSale, onFeedback, onRefund }) => {
+  onVisitEvent: () => void
+}> = ({ ticket, onViewQR, onRedeem, onCopyOutpoint, onTransfer, onListForSale, onFeedback, onRefund, onVisitEvent }) => {
   const isActive = ticket.status === "VALID"
   const isRedeemed = ticket.status === "REDEEMED"
   const resaleAllowed = ticket.policy?.resaleAllowed !== false
@@ -330,17 +380,41 @@ const TicketCard: React.FC<{
         ? 'border-green-500/30 bg-green-500/5 shadow-[0_0_20px_rgba(34,197,94,0.1)]' 
         : 'border-neo-border/20 bg-neo-contrast/5'
     }`}>
-      <div className="relative mb-4 rounded-md overflow-hidden">
+      <button
+        type="button"
+        onClick={onVisitEvent}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onVisitEvent()
+          }
+        }}
+        className="relative mb-4 rounded-md overflow-hidden w-full focus:outline-none focus:ring-2 focus:ring-neo-cyan text-left"
+        aria-label={`Open event page for ${ticket.eventName}`}
+      >
         <img
           src={ticket.eventImageUrl || '/placeholder.svg'}
           alt={`${ticket.eventName} artwork`}
           className="h-40 w-full object-cover"
         />
-      </div>
+      </button>
 
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
-          <h3 className="font-bold text-neo-contrast mb-1">{ticket.eventName}</h3>
+          <button
+            type="button"
+            onClick={onVisitEvent}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onVisitEvent()
+              }
+            }}
+            className="font-bold text-neo-contrast mb-1 text-left hover:underline focus:outline-none focus:ring-2 focus:ring-neo-cyan"
+            aria-label={`View event page for ${ticket.eventName}`}
+          >
+            {ticket.eventName}
+          </button>
           <p className="text-neo-contrast/70 text-sm">{ticket.seat}</p>
         </div>
         <StatusBadge status={ticket.status} />
@@ -507,6 +581,7 @@ const Tickets = () => {
   
   // Combine mock and persisted tickets
   const [tickets, setTickets] = useState<Ticket[]>([...mockTickets, ...persistedTickets])
+  const navigate = useNavigate()
 
   useEffect(() => {
     try {
@@ -764,7 +839,8 @@ const deriveSellerLockingScript = (ticket: Ticket) => {
                       onTransfer={() => handleTransfer(ticket)}
                       onListForSale={() => handleListForSale(ticket)}
                       onFeedback={() => handleFeedback(ticket)}
-                      onRefund={() => handleRefund(ticket)}
+                    onRefund={() => handleRefund(ticket)}
+                    onVisitEvent={() => navigate(`/events/${ticket.eventId}`)}
                     />
                   ))}
                 </div>
@@ -787,6 +863,7 @@ const deriveSellerLockingScript = (ticket: Ticket) => {
                       onListForSale={() => handleListForSale(ticket)}
                       onFeedback={() => handleFeedback(ticket)}
                       onRefund={() => handleRefund(ticket)}
+                      onVisitEvent={() => navigate(`/events/${ticket.eventId}`)}
                     />
                   ))}
                 </div>
@@ -806,7 +883,7 @@ const deriveSellerLockingScript = (ticket: Ticket) => {
         onConfirm={handleTransferConfirm}
         ticketId={transferModal.ticket?.id || ''}
         eventName={transferModal.ticket?.eventName || ''}
-        policy={transferModal.ticket?.policy || basePolicy}
+        policy={transferModal.ticket?.policy || demoTicketPolicy}
         sellerLockingScriptHex={transferModal.ticket ? deriveSellerLockingScript(transferModal.ticket) : ''}
       />
 
@@ -818,7 +895,7 @@ const deriveSellerLockingScript = (ticket: Ticket) => {
         ticketId={saleModal.ticket?.id || ''}
         eventName={saleModal.ticket?.eventName || ''}
         originalPrice={saleModal.ticket?.priceInSats || 0}
-        policy={saleModal.ticket?.policy || basePolicy}
+        policy={saleModal.ticket?.policy || demoTicketPolicy}
         sellerLockingScriptHex={saleModal.ticket ? deriveSellerLockingScript(saleModal.ticket) : ''}
       />
 

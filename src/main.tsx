@@ -11,6 +11,7 @@ const Marketplace = lazy(() => import('./pages/Marketplace'))
 const Tickets = lazy(() => import('./pages/Tickets'))
 const Venue = lazy(() => import('./pages/Venue'))
 const Organizer = lazy(() => import('./pages/Organizer'))
+const Event = lazy(() => import('./pages/Event'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 createRoot(document.getElementById("root")!).render(
@@ -23,6 +24,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/venue" element={<Venue />} />
           <Route path="/organizer" element={<Organizer />} />
+          <Route path="/events/:eventId" element={<Event />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
