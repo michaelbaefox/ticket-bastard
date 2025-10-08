@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import type { StoredTicket } from '@/types/ticketing'
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   // Initialize state with value from localStorage or initial value
@@ -30,3 +31,5 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 export function usePersistedState<T>(key: string, defaultValue: T) {
   return useLocalStorage(key, defaultValue)
 }
+
+export const useTickets = () => useLocalStorage<StoredTicket[]>('ticketBastardTickets', [])
