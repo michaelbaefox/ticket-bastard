@@ -196,7 +196,7 @@ All colors MUST be HSL.
     --reach-ease: cubic-bezier(0.22, 0.95, 0.38, 1);
     --flip-ease: cubic-bezier(0.24, 0.82, 0.2, 1);
     --settle-ease: cubic-bezier(0.2, 0.68, 0.28, 1.05);
-    --title-delay: calc(var(--reach-duration) + var(--flip-duration) + var(--settle-duration) - var(--swap-overlap) + 200ms);
+    --title-delay: calc((var(--reach-duration) + var(--flip-duration) + var(--settle-duration) - var(--swap-overlap) + 200ms) / 2);
   }
 
   .logo-reveal::before,
@@ -238,7 +238,7 @@ All colors MUST be HSL.
   }
 
   .logo-reveal__hand--up {
-    transform: translateY(-32%) scale(0.36) rotate(180deg);
+    transform: translateY(-32%) scale(0.32) rotate(180deg);
     transform-origin: 50% 72%;
   }
 
@@ -356,17 +356,14 @@ All colors MUST be HSL.
       opacity: 0;
       transform: translateY(-32%) scale(0.32) rotate(180deg);
     }
-
-    60% {
-      opacity: 0.92;
-      transform: translateY(-17%) scale(0.68) rotate(180deg);
+    45% {
+      opacity: 0.78;
+      transform: translateY(-18%) scale(0.58) rotate(180deg);
     }
-
-    86% {
+    75% {
       opacity: 1;
-      transform: translateY(-9%) scale(0.83) rotate(180deg);
+      transform: translateY(-9%) scale(0.82) rotate(180deg);
     }
-
     100% {
       opacity: 1;
       transform: translateY(-6%) scale(0.88) rotate(180deg);
