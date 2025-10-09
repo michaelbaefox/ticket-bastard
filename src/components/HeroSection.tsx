@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowDown } from 'lucide-react'
-import tbLogo from '../assets/tb-logo.png'
+import AnimatedLogo from './AnimatedLogo'
 
 export default function HeroSection() {
   const [ctaAlt, setCtaAlt] = React.useState(false)
@@ -59,22 +59,15 @@ export default function HeroSection() {
       <section className="flex-1 flex items-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="w-full max-w-[1280px] mx-auto flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-20">
           {/* Left: logo */}
-          <div className="w-full max-w-xs sm:max-w-sm lg:max-w-none lg:basis-5/12 relative overflow-hidden flex justify-center">
-            <div aria-hidden className="pointer-events-none absolute -inset-4 opacity-[0.18] blur-2xl" style={{ background: 'radial-gradient(circle at 40% 20%, rgba(229,75,140,0.24), rgba(99,102,241,0.14) 40%, transparent 60%)' }} />
-            <img
-              src={tbLogo}
-              alt="TicketBastard — F*** the system. Scan the bastard."
-              className="relative z-10 w-full max-w-[420px] md:max-w-[480px] h-auto select-none drop-shadow-neo-glow"
-              style={{ imageRendering: 'crisp-edges' }}
-              draggable={false}
-            />
+          <div className="w-full max-w-xs sm:max-w-sm lg:max-w-none lg:basis-5/12 relative flex justify-center">
+            <AnimatedLogo className="max-w-[420px] md:max-w-[480px]" />
           </div>
 
           {/* Right: info + CTAs */}
           <div className="w-full lg:basis-7/12 text-center lg:text-left">
             <div className="relative space-y-4">
               <h1 className="text-[32px] sm:text-[36px] md:text-[40px] font-extrabold leading-tight tracking-[-0.02em]">
-                F*** the system. <span className="text-neo-contrast/80">Own your tickets.</span>
+                <span style={{ color: '#ff85c5' }}>F***</span> the system. Scan the <span style={{ color: '#ff85c5' }}>bastard</span>.
               </h1>
               <p className="mx-auto lg:mx-0 text-base leading-relaxed text-neo-contrast/70 max-w-prose">
                 Plain, portable, verifiable. No vendor lock‑in. No middlemen.

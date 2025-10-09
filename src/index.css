@@ -179,4 +179,258 @@ All colors MUST be HSL.
     outline-offset: 2px;
   }
 
+  .logo-reveal {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    transform: translateY(36px);
+    opacity: 0;
+    transition: transform 1000ms cubic-bezier(0.16, 1, 0.3, 1), opacity 1500ms ease;
+    will-change: transform, opacity;
+    isolation: isolate;
+    overflow: visible;
+    --reach-duration: 1600ms;
+    --flip-duration: 900ms;
+    --settle-duration: 320ms;
+    --swap-overlap: 520ms;
+    --reach-ease: cubic-bezier(0.22, 0.95, 0.38, 1);
+    --flip-ease: cubic-bezier(0.24, 0.82, 0.2, 1);
+    --settle-ease: cubic-bezier(0.2, 0.68, 0.28, 1.05);
+    --title-delay: calc(var(--reach-duration) + var(--flip-duration) + var(--settle-duration) - var(--swap-overlap) + 200ms);
+  }
+
+  .logo-reveal::before,
+  .logo-reveal::after {
+    content: none;
+  }
+
+  .logo-reveal__stage {
+    position: relative;
+    width: 68%;
+    max-width: 360px;
+    aspect-ratio: 644 / 936;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  .logo-reveal__hand,
+  .logo-reveal__title {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .logo-reveal__hand {
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  .logo-reveal__hand img,
+  .logo-reveal__title img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .logo-reveal__hand--up {
+    transform: translateY(-32%) scale(0.36) rotate(180deg);
+    transform-origin: 50% 72%;
+  }
+
+  .logo-reveal__hand--down {
+    transform: translateY(-18%) scale(0.88) rotate(180deg);
+    transform-origin: 50% 72%;
+  }
+
+  .logo-reveal__title {
+    left: -16%;
+    right: -4%;
+    bottom: 82%;
+    top: auto;
+    opacity: 0;
+    transform: translateX(-28%);
+    will-change: transform, opacity;
+    z-index: 3;
+  }
+
+  .hand-stage--start .logo-reveal__hand--up {
+    opacity: 1;
+    animation:
+      hand-up-drive var(--reach-duration) var(--reach-ease) forwards;
+  }
+
+  .hand-stage--swap .logo-reveal__hand--up {
+    animation: hand-up-fade 140ms ease forwards;
+  }
+
+  .hand-stage--swap .logo-reveal__hand--down {
+    opacity: 1;
+    animation:
+      hand-down-flip calc(var(--flip-duration) + var(--settle-duration)) var(--flip-ease) forwards;
+    animation-delay: calc(-1 * var(--swap-overlap));
+  }
+
+  .hand-stage--instant .logo-reveal__hand--up {
+    opacity: 0;
+    transform: translateY(-18%) scale(0.38) rotate(180deg);
+    animation: none;
+  }
+
+  .hand-stage--instant .logo-reveal__hand--down {
+    opacity: 1;
+    transform: translateY(-30%) scale(0.88) rotate(0deg);
+    animation: none;
+  }
+
+  .svg-stage--active .logo-reveal__title {
+    animation: logo-title-slide 1400ms cubic-bezier(0.25, 0.95, 0.25, 1) var(--title-delay) forwards;
+  }
+
+  .logo-reveal--revealed {
+    transform: translateY(var(--parallax-offset, 0px));
+    opacity: 1;
+  }
+
+  .logo-reveal--revealed .logo-reveal__insignia,
+  .svg-stage--active .logo-reveal__insignia {
+    transform: translateY(0.8%) scale(1) rotate(0deg);
+  }
+
+  .logo-reveal--instant,
+  .reduce-motion .logo-reveal {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .logo-reveal--instant::before,
+  .reduce-motion .logo-reveal::before {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  .logo-reveal--instant::after,
+  .reduce-motion .logo-reveal::after {
+    opacity: 0.5;
+  }
+
+  .logo-reveal--instant .logo-reveal__insignia,
+  .reduce-motion .logo-reveal .logo-reveal__insignia,
+  .svg-stage--instant .logo-reveal__insignia {
+    opacity: 1;
+    transform: translateY(0.8%) scale(1) rotate(0deg);
+    animation: none;
+  }
+
+  .logo-reveal--instant .logo-reveal__title,
+  .reduce-motion .logo-reveal .logo-reveal__title,
+  .svg-stage--instant .logo-reveal__title {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .logo-reveal--instant .logo-reveal__stage,
+  .reduce-motion .logo-reveal .logo-reveal__stage {
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .logo-reveal {
+      transition: none;
+    }
+
+    .logo-reveal::before,
+    .logo-reveal::after,
+    .logo-reveal__insignia,
+    .logo-reveal__title {
+      transition: none;
+    }
+  }
+
+  @keyframes hand-up-drive {
+    0% {
+      opacity: 0;
+      transform: translateY(-32%) scale(0.32) rotate(180deg);
+    }
+
+    60% {
+      opacity: 0.92;
+      transform: translateY(-17%) scale(0.68) rotate(180deg);
+    }
+
+    86% {
+      opacity: 1;
+      transform: translateY(-9%) scale(0.83) rotate(180deg);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(-6%) scale(0.88) rotate(180deg);
+    }
+  }
+
+  @keyframes hand-up-fade {
+    0% {
+      opacity: 1;
+      transform: translateY(-6%) scale(0.88) rotate(180deg);
+    }
+
+    48% {
+      opacity: 0.32;
+      transform: translateY(-15%) scale(0.82) rotate(150deg);
+    }
+
+    100% {
+      opacity: 0;
+      transform: translateY(-22%) scale(0.78) rotate(132deg);
+    }
+  }
+
+  @keyframes hand-down-flip {
+    0% {
+      opacity: 0;
+      transform: translateY(-18%) scale(0.88) rotate(166deg);
+    }
+
+    30% {
+      opacity: 0.58;
+      transform: translateY(-18%) scale(0.95) rotate(62deg);
+    }
+
+    66% {
+      opacity: 0.98;
+      transform: translateY(-18%) scale(1) rotate(5deg);
+    }
+
+    90% {
+      opacity: 1;
+      transform: translateY(-18.2%) scale(1) rotate(-1deg);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(-18%) scale(1) rotate(0deg);
+    }
+  }
+
+  @keyframes logo-title-slide {
+    0% {
+      opacity: 0;
+      transform: translateX(-34%) scale(1.04);
+    }
+
+    60% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
 }
