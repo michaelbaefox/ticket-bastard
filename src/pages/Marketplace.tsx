@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { Search, Grid, List, Filter, ChevronLeft, ChevronRight, Copy, Check, MessageCircle } from 'lucide-react'
+import { Search, Filter, ChevronLeft, ChevronRight, Copy, Check, MessageCircle } from 'lucide-react'
 import { ScanlineOverlay } from '@/components/ScanlineOverlay'
 import { PurchaseModal } from '@/components/PurchaseModal'
 import FeedbackModal from '@/components/FeedbackModal'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
 import { useTickets, useEvents } from '@/hooks/useLocalStorage'
-import { useFocusManagement, useKeyboardNavigation, useAnnouncements } from '@/hooks/useAccessibility'
+import { useFocusManagement, useAnnouncements } from '@/hooks/useAccessibility'
 import { TicketPolicy, TicketOnChain, StoredTicket, TicketLedgerEntry } from '@/types/ticketing'
 import { canonicalizePolicy, derivePolicySignature } from '@/lib/ticketing'
 import { getEventById } from '@/data/events'
@@ -234,14 +234,8 @@ export default function Marketplace() {
   const [events] = useEvents()
   const { setFocus } = useFocusManagement()
   const { announce } = useAnnouncements()
-  const navigate = useNavigate()
 
-  const eventImageById = useMemo(() => {
-    return events.reduce<Record<string, string | undefined>>((accumulator, event) => {
-      accumulator[event.eventId] = event.imageUrl
-      return accumulator
-    }, {})
-  }, [events])
+  const isListView = viewMode === 'list'
 
   // Simulate loading
   useEffect(() => {
@@ -348,6 +342,232 @@ export default function Marketplace() {
     }
   })
 
+  const listingsWrapperClass = isListView
+    ? 'flex flex-col gap-4'
+    : 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+
+  const loadingWrapperClass = isListView
+    ? 'flex flex-col gap-4'
+    : 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+
+  const skeletonCardClass = isListView
+    ? 'bg-transparent border-neo-border/10 md:flex md:items-center md:gap-6'
+    : 'bg-transparent border-neo-border/10'
+
+  const skeletonContentClass = isListView ? 'flex-1 p-4 space-y-3' : 'p-4'
+
+  const renderGridListing = (listing: MarketplaceListing) => {
+    return (
+      <Card
+        key={listing.id}
+        className="bg-transparent border-neo-border/20 hover:border-neo-border/30 transition-colors focus-within:border-neo-border"
+        role="listitem"
+      >
+        <div className="relative">
+          <Link
+            to={`/events/${listing.eventId}`}
+            className="block focus:outline-none"
+            aria-label={`View event page for ${listing.eventName}`}
+          >
+            <div className="relative">
+              <div className="aspect-video w-full overflow-hidden rounded-t-md bg-black">
+                <img
+                  src={listing.imageUrl || '/placeholder.svg'}
+                  alt={`${listing.eventName} artwork`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+
+            <CardContent className="p-4 space-y-4">
+              <h3 className="font-bold text-neo-contrast mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
+            </CardContent>
+          </Link>
+          <Link
+            to={`/events/${listing.eventId}`}
+            className="absolute inset-0"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+        </div>
+
+        <CardContent className="pt-0 px-4 pb-4 space-y-4">
+          <div className="space-y-2 mb-4 text-sm">
+            <div className="text-neo-contrast/70">
+              <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}
+              {dateFormatter.format(new Date(listing.validFrom))} - {dateFormatter.format(new Date(listing.validTo))}
+            </div>
+
+            <div className="text-neo-contrast/70">
+              <span className="font-mono text-xs text-neo-contrast/50">SELLER:</span>{' '}
+              <button
+                onClick={() => handleCopy(listing.sellerOutpoint, 'Seller address')}
+                className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
+                aria-label="Copy seller address"
+              >
+                {truncateAddress(listing.sellerOutpoint)}
+                {copiedAddress === listing.sellerOutpoint ? (
+                  <Check className="w-3 h-3" />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+              </button>
+            </div>
+
+            <div className="text-neo-contrast/70">
+              <span className="font-mono text-xs text-neo-contrast/50">TICKET:</span>{' '}
+              <button
+                onClick={() => handleCopy(listing.ticketOutpoint, 'Ticket outpoint')}
+                className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
+                aria-label="Copy ticket outpoint"
+              >
+                {truncateAddress(listing.ticketOutpoint)}
+                {copiedAddress === listing.ticketOutpoint ? (
+                  <Check className="w-3 h-3" />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold text-neo-contrast">
+              {listing.priceInSats.toLocaleString()}{' '}
+              <span className="text-sm font-mono text-neo-contrast/60">sats</span>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleBuyTicket(listing)}
+                className="font-mono text-xs font-bold bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                aria-label={`Buy ticket for ${listing.eventName}`}
+                aria-describedby={`listing-${listing.id}`}
+              >
+                [ BUY TICKET ]
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFeedback(listing)}
+                className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast"
+                aria-label={`Leave feedback for ${listing.eventName}`}
+              >
+                <MessageCircle className="w-4 h-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const renderListListing = (listing: MarketplaceListing) => {
+    return (
+      <Card
+        key={listing.id}
+        className="relative flex flex-col md:flex-row bg-transparent border-neo-border/20 hover:border-neo-border/30 transition-colors focus-within:border-neo-border"
+        role="listitem"
+      >
+        <Link
+          to={`/events/${listing.eventId}`}
+          className="md:w-52 lg:w-56 flex-shrink-0 focus:outline-none"
+          aria-label={`View event page for ${listing.eventName}`}
+        >
+          <div className="aspect-[4/3] md:h-full w-full overflow-hidden rounded-t-md md:rounded-l-md md:rounded-tr-none bg-black">
+            <img
+              src={listing.imageUrl || '/placeholder.svg'}
+              alt={`${listing.eventName} artwork`}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </Link>
+        <CardContent className="flex-1 p-4 flex flex-col gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+            <Link
+              to={`/events/${listing.eventId}`}
+              className="font-bold text-neo-contrast hover:underline focus:outline-none"
+              aria-label={`View event page for ${listing.eventName}`}
+            >
+              {listing.eventName}
+            </Link>
+            <div className="text-lg font-bold text-neo-contrast">
+              {listing.priceInSats.toLocaleString()}{' '}
+              <span className="text-xs font-mono text-neo-contrast/60">sats</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 text-sm">
+            <div className="space-y-1 text-neo-contrast/70">
+              <div>
+                <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}
+                {dateFormatter.format(new Date(listing.validFrom))} - {dateFormatter.format(new Date(listing.validTo))}
+              </div>
+              <div>
+                <span className="font-mono text-xs text-neo-contrast/50">SELLER:</span>{' '}
+                <button
+                  onClick={() => handleCopy(listing.sellerOutpoint, 'Seller address')}
+                  className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
+                  aria-label="Copy seller address"
+                >
+                  {truncateAddress(listing.sellerOutpoint)}
+                  {copiedAddress === listing.sellerOutpoint ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+              <div>
+                <span className="font-mono text-xs text-neo-contrast/50">TICKET:</span>{' '}
+                <button
+                  onClick={() => handleCopy(listing.ticketOutpoint, 'Ticket outpoint')}
+                  className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
+                  aria-label="Copy ticket outpoint"
+                >
+                  {truncateAddress(listing.ticketOutpoint)}
+                  {copiedAddress === listing.ticketOutpoint ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start xl:self-auto">
+              <Button
+                onClick={() => handleBuyTicket(listing)}
+                className="font-mono text-xs font-bold bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                aria-label={`Buy ticket for ${listing.eventName}`}
+                aria-describedby={`listing-${listing.id}`}
+              >
+                [ BUY TICKET ]
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFeedback(listing)}
+                className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast"
+                aria-label={`Leave feedback for ${listing.eventName}`}
+              >
+                <MessageCircle className="w-4 h-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const renderListingCard = (listing: MarketplaceListing) => {
+    if (isListView) {
+      return renderListListing(listing)
+    }
+
+    return renderGridListing(listing)
+  }
+
   return (
     <div className="min-h-screen">
       <ScanlineOverlay />
@@ -360,7 +580,7 @@ export default function Marketplace() {
         
         {/* Toolbar */}
         <section className="mb-8" aria-label="Search and filter controls">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between w-full">
             {/* Search */}
             <form onSubmit={handleSearch} className="w-full lg:flex-1 max-w-md" role="search">
               <div className="relative">
@@ -377,10 +597,10 @@ export default function Marketplace() {
             </form>
 
             {/* Controls */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 w-full">
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-40 font-mono text-xs bg-transparent border-neo-border/25 focus:border-neo-border text-neo-contrast">
+                <SelectTrigger className="w-full sm:w-40 font-mono text-xs bg-transparent border-neo-border/25 focus:border-neo-border text-neo-contrast">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-neo-contrast-inverse border-neo-border/25">
@@ -395,19 +615,19 @@ export default function Marketplace() {
               <Button
                 variant="outline"
                 size="sm"
-                className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast"
+                className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast w-full sm:w-auto"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 FILTER
               </Button>
 
               {/* View Toggle */}
-              <div className="flex border border-neo-border/25 rounded">
+              <div className="flex border border-neo-border/25 rounded w-full sm:w-auto">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
-                  className={`font-mono text-xs font-bold rounded-none ${
+                  className={`font-mono text-xs font-bold rounded-none w-1/2 sm:w-auto ${
                     viewMode === 'grid'
                       ? 'bg-neo-contrast text-neo-contrast-inverse shadow-neo-md'
                       : 'bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse'
@@ -419,7 +639,7 @@ export default function Marketplace() {
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('list')}
-                  className={`font-mono text-xs font-bold rounded-none ${
+                  className={`font-mono text-xs font-bold rounded-none w-1/2 sm:w-auto ${
                     viewMode === 'list'
                       ? 'bg-neo-contrast text-neo-contrast-inverse shadow-neo-md'
                       : 'bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse'
@@ -442,18 +662,39 @@ export default function Marketplace() {
         {/* Listings */}
         <main id="main-content" role="main">
           {isLoading ? (
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} aria-label="Loading listings">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="bg-transparent border-neo-border/10">
-                  <CardContent className="p-4">
-                    <Skeleton className="h-6 w-3/4 mb-4 bg-neo-contrast/10" />
-                    <Skeleton className="h-4 w-1/2 mb-2 bg-neo-contrast/10" />
-                    <Skeleton className="h-4 w-2/3 mb-2 bg-neo-contrast/10" />
-                    <Skeleton className="h-4 w-1/3 mb-4 bg-neo-contrast/10" />
-                    <Skeleton className="h-10 w-full bg-neo-contrast/10" />
-                  </CardContent>
-                </Card>
-              ))}
+            <div className={loadingWrapperClass} aria-label="Loading listings">
+              {[...Array(6)].map((_, index) => {
+                if (isListView) {
+                  return (
+                    <Card key={index} className={skeletonCardClass}>
+                      <div className="md:w-52 lg:w-56 flex-shrink-0 hidden md:block p-4">
+                        <Skeleton className="h-full w-full rounded bg-neo-contrast/10" />
+                      </div>
+                      <CardContent className={skeletonContentClass}>
+                        <Skeleton className="h-5 w-2/3 bg-neo-contrast/10" />
+                        <Skeleton className="h-4 w-1/2 bg-neo-contrast/10" />
+                        <Skeleton className="h-4 w-3/4 bg-neo-contrast/10" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-9 w-28 bg-neo-contrast/10" />
+                          <Skeleton className="h-9 w-9 bg-neo-contrast/10" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                }
+
+                return (
+                  <Card key={index} className={skeletonCardClass}>
+                    <CardContent className={skeletonContentClass}>
+                      <Skeleton className="h-6 w-3/4 mb-4 bg-neo-contrast/10" />
+                      <Skeleton className="h-4 w-1/2 mb-2 bg-neo-contrast/10" />
+                      <Skeleton className="h-4 w-2/3 mb-2 bg-neo-contrast/10" />
+                      <Skeleton className="h-4 w-1/3 mb-4 bg-neo-contrast/10" />
+                      <Skeleton className="h-10 w-full bg-neo-contrast/10" />
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
         ) : sortedListings.length === 0 ? (
           <div className="text-center py-16">
@@ -470,111 +711,8 @@ export default function Marketplace() {
             </Card>
           </div>
           ) : (
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`} role="list" aria-label="Event listings">
-              {sortedListings.map((listing) => (
-                <Card
-                  key={listing.id}
-                  className="bg-transparent border-neo-border/20 hover:border-neo-border/30 transition-colors focus-within:border-neo-border"
-                  role="listitem"
-                >
-                  <div className="relative">
-                    <Link
-                      to={`/events/${listing.eventId}`}
-                      className="block focus:outline-none"
-                      aria-label={`View event page for ${listing.eventName}`}
-                    >
-                      <div className="relative">
-                        <div className="aspect-video w-full overflow-hidden rounded-t-md bg-black">
-                          <img
-                            src={listing.imageUrl || '/placeholder.svg'}
-                            alt={`${listing.eventName} artwork`}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </div>
-
-                      <CardContent className="p-4 space-y-4">
-                        <h3 className="font-bold text-neo-contrast mb-3" id={`listing-${listing.id}`}>{listing.eventName}</h3>
-                      </CardContent>
-                    </Link>
-                    <Link
-                      to={`/events/${listing.eventId}`}
-                      className="absolute inset-0"
-                      aria-hidden="true"
-                      tabIndex={-1}
-                    />
-                  </div>
-
-                  <CardContent className="pt-0 px-4 pb-4 space-y-4">
-
-                  <div className="space-y-2 mb-4 text-sm">
-                    <div className="text-neo-contrast/70">
-                      <span className="font-mono text-xs text-neo-contrast/50">VALID:</span>{' '}
-                      {dateFormatter.format(new Date(listing.validFrom))} - {dateFormatter.format(new Date(listing.validTo))}
-                    </div>
-                    
-                    <div className="text-neo-contrast/70">
-                      <span className="font-mono text-xs text-neo-contrast/50">SELLER:</span>{' '}
-                      <button
-                        onClick={() => handleCopy(listing.sellerOutpoint, 'Seller address')}
-                        className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
-                        aria-label="Copy seller address"
-                      >
-                        {truncateAddress(listing.sellerOutpoint)}
-                        {copiedAddress === listing.sellerOutpoint ? (
-                          <Check className="w-3 h-3" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </button>
-                    </div>
-                    
-                    <div className="text-neo-contrast/70">
-                      <span className="font-mono text-xs text-neo-contrast/50">TICKET:</span>{' '}
-                      <button
-                        onClick={() => handleCopy(listing.ticketOutpoint, 'Ticket outpoint')}
-                        className="font-mono hover:text-neo-contrast transition-colors inline-flex items-center gap-1"
-                        aria-label="Copy ticket outpoint"
-                      >
-                        {truncateAddress(listing.ticketOutpoint)}
-                        {copiedAddress === listing.ticketOutpoint ? (
-                          <Check className="w-3 h-3" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold text-neo-contrast">
-                      {listing.priceInSats.toLocaleString()}{' '}
-                      <span className="text-sm font-mono text-neo-contrast/60">sats</span>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleBuyTicket(listing)}
-                        className="font-mono text-xs font-bold bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] transition-all"
-                        aria-label={`Buy ticket for ${listing.eventName}`}
-                        aria-describedby={`listing-${listing.id}`}
-                      >
-                        [ BUY TICKET ]
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleFeedback(listing)}
-                        className="font-mono text-xs bg-transparent border-neo-border/25 hover:bg-neo-contrast hover:text-neo-contrast-inverse text-neo-contrast"
-                        aria-label={`Leave feedback for ${listing.eventName}`}
-                      >
-                        <MessageCircle className="w-4 h-4" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-                </Card>
-              ))}
+            <div className={listingsWrapperClass} role="list" aria-label="Event listings">
+              {sortedListings.map((listing) => renderListingCard(listing))}
             </div>
           )}
         </main>

@@ -5,6 +5,7 @@ import tbTitle from '../assets/tb-title.svg'
 
 type AnimatedLogoProps = {
   className?: string
+  onGlitchStateChange?: (isActive: boolean) => void
 }
 
 const parseCssTime = (node: HTMLElement, variableName: string) => {
@@ -29,11 +30,29 @@ const parseCssTime = (node: HTMLElement, variableName: string) => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className }) => {
+const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className, onGlitchStateChange }) => {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
   const stageRef = React.useRef<HTMLDivElement | null>(null)
   const swapTimeoutRef = React.useRef<number | null>(null)
   const titleActivateRef = React.useRef<number | null>(null)
+  const glitchActiveRef = React.useRef(false)
+
+  const emitGlitchState = React.useCallback(
+    (isActive: boolean) => {
+      if (glitchActiveRef.current === isActive) {
+        return
+      }
+
+      glitchActiveRef.current = isActive
+
+      if (!onGlitchStateChange) {
+        return
+      }
+
+      onGlitchStateChange(isActive)
+    },
+    [onGlitchStateChange],
+  )
 
   React.useEffect(() => {
     if (typeof window === 'undefined') {
@@ -79,6 +98,7 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className }) => {
       window.cancelAnimationFrame(revealNestedFrameId)
       clearSwapTimeout()
       clearTitleActivation()
+      emitGlitchState(false)
 
       if (mediaQuery.matches) {
         currentElement.classList.add('logo-reveal--instant')
@@ -86,6 +106,7 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className }) => {
         currentStage.classList.add('hand-stage--instant', 'hand-stage--swap', 'svg-stage--instant', 'svg-stage--active')
         currentStage.classList.remove('hand-stage--start')
         currentElement.style.setProperty('--parallax-offset', '0px')
+        emitGlitchState(false)
         return
       }
 
@@ -110,6 +131,7 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className }) => {
       const titleDelay = parseCssTime(element, '--title-delay')
       titleActivateRef.current = window.setTimeout(() => {
         stageRef.current?.classList.add('svg-stage--active')
+        emitGlitchState(true)
         titleActivateRef.current = null
       }, titleDelay)
     }
@@ -148,13 +170,14 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className }) => {
       window.cancelAnimationFrame(revealNestedFrameId)
       clearSwapTimeout()
       clearTitleActivation()
+      emitGlitchState(false)
     }
-  }, [])
+  }, [emitGlitchState])
 
   return (
     <div
       ref={containerRef}
-      className={`logo-reveal relative z-10 inline-flex w-full select-none ${className ?? ''}`.trim()}
+      className={`logo-reveal relative z-10 inline-flex w-full select-none items-center justify-center ${className ?? ''}`.trim()}
       aria-label="TicketBastard logo animation"
       role="img"
     >

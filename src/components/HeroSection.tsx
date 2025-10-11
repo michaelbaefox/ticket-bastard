@@ -6,7 +6,17 @@ import AnimatedLogo from './AnimatedLogo'
 export default function HeroSection() {
   const [ctaAlt, setCtaAlt] = React.useState(false)
   const [footerFlash, setFooterFlash] = React.useState<string | null>(null)
+  const [logoGlitchActive, setLogoGlitchActive] = React.useState(false)
   const statusMessage = footerFlash ?? ''
+  const heroGlitchWordClasses = React.useMemo(() => {
+    const classes = ['hero-glitch-word']
+
+    if (logoGlitchActive) {
+      classes.push('hero-glitch-word--active')
+    }
+
+    return classes.join(' ')
+  }, [logoGlitchActive])
 
   const handleScrollHintKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (event) => {
     if (event.key !== 'Enter' && event.key !== ' ') {
@@ -60,14 +70,18 @@ export default function HeroSection() {
         <div className="w-full max-w-[1280px] mx-auto flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-20">
           {/* Left: logo */}
           <div className="w-full max-w-xs sm:max-w-sm lg:max-w-none lg:basis-5/12 relative flex justify-center">
-            <AnimatedLogo className="max-w-[420px] md:max-w-[480px]" />
+            <AnimatedLogo className="max-w-[420px] md:max-w-[480px]" onGlitchStateChange={setLogoGlitchActive} />
           </div>
 
           {/* Right: info + CTAs */}
           <div className="w-full lg:basis-7/12 text-center lg:text-left">
             <div className="relative space-y-4">
               <h1 className="text-[32px] sm:text-[36px] md:text-[40px] font-extrabold leading-tight tracking-[-0.02em]">
-                <span style={{ color: '#ff85c5' }}>F***</span> the system. Scan the <span style={{ color: '#ff85c5' }}>bastard</span>.
+                <span >F***</span> the system. Scan the{' '}
+                <span className={heroGlitchWordClasses} data-text="bastard">
+                  bastard
+                </span>
+                .
               </h1>
               <p className="mx-auto lg:mx-0 text-base leading-relaxed text-neo-contrast/70 max-w-prose">
                 Plain, portable, verifiable. No vendor lock‑in. No middlemen.
