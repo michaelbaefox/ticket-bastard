@@ -3,8 +3,11 @@ import tbDown from '../assets/tb-down.svg'
 import tbInsign from '../assets/tb-insign.svg'
 import tbTitle from '../assets/tb-title.svg'
 
+type GlitchIntensity = 'soft' | 'loud'
+
 type AnimatedLogoProps = {
   className?: string
+  glitchIntensity?: GlitchIntensity
   onGlitchStateChange?: (isActive: boolean) => void
 }
 
@@ -30,7 +33,17 @@ const parseCssTime = (node: HTMLElement, variableName: string) => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className, onGlitchStateChange }) => {
+const intensityToCycleMs: Record<GlitchIntensity, number> = {
+  soft: 8200,
+  loud: 6400,
+}
+
+const intensityToHoverTravel: Record<GlitchIntensity, string> = {
+  soft: '8px',
+  loud: '12px',
+}
+
+const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className, glitchIntensity = 'soft', onGlitchStateChange }) => {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
   const stageRef = React.useRef<HTMLDivElement | null>(null)
   const swapTimeoutRef = React.useRef<number | null>(null)
@@ -67,6 +80,8 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className, onGlitchStateCha
     }
 
     element.style.setProperty('--parallax-offset', '0px')
+    element.style.setProperty('--glitch-cycle-duration', `${intensityToCycleMs[glitchIntensity]}ms`)
+    element.style.setProperty('--hover-float-travel', intensityToHoverTravel[glitchIntensity])
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     let revealFrameId = 0
@@ -172,14 +187,15 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className, onGlitchStateCha
       clearTitleActivation()
       emitGlitchState(false)
     }
-  }, [emitGlitchState])
+  }, [emitGlitchState, glitchIntensity])
 
   return (
     <div
       ref={containerRef}
       className={`logo-reveal relative z-10 inline-flex w-full select-none items-center justify-center ${className ?? ''}`.trim()}
-      aria-label="TicketBastard logo animation"
+      aria-label="TicketBastard logo reveals itself with glitching neon accents"
       role="img"
+      data-glitch-intensity={glitchIntensity}
     >
       <div ref={stageRef} className="logo-reveal__stage" aria-hidden="true">
         <div className="logo-reveal__hand logo-reveal__hand--up">

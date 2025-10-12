@@ -140,6 +140,7 @@ All colors MUST be HSL.
     /* Explicit fallback for environments without Tailwind */
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    min-height: 100vh;
   }
 
   /* Ensure dark theme is applied by default */
@@ -393,6 +394,54 @@ All colors MUST be HSL.
   .logo-reveal::before,
   .logo-reveal::after {
     content: none;
+  }
+
+  .logo-reveal::after {
+    content: '';
+    position: absolute;
+    inset: -14%;
+    border-radius: 50%;
+    opacity: 0.08;
+    background: radial-gradient(circle, hsla(334 75% 60% / 0.4) 0%, transparent 72%);
+    filter: blur(36px);
+    transition: opacity 500ms ease;
+  }
+
+  .logo-reveal[data-glitch-intensity='loud']::after {
+    opacity: 0.16;
+  }
+
+  .logo-reveal[data-glitch-intensity='soft'] .logo-reveal__stage::before,
+  .logo-reveal[data-glitch-intensity='soft'] .logo-reveal__stage::after {
+    opacity: 0.6;
+    filter: saturate(0.7);
+  }
+
+  .logo-reveal[data-glitch-intensity='soft'] .logo-reveal__hand img,
+  .logo-reveal[data-glitch-intensity='soft'] .logo-reveal__title img {
+    filter: saturate(0.9);
+  }
+
+  @keyframes heroGrain {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    25% {
+      transform: translate3d(-2%, 1%, 0) scale(1.02);
+    }
+
+    50% {
+      transform: translate3d(1%, -1%, 0) scale(0.98);
+    }
+
+    75% {
+      transform: translate3d(-1%, 2%, 0) scale(1.01);
+    }
+
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
   }
 
   .logo-reveal__stage {
