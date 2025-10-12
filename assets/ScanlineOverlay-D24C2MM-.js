@@ -1,1 +1,0 @@
-import{j as e}from"./index-Dcx6mcxo.js";const a=({opacity:n=.03})=>e.jsx("div",{"aria-hidden":"true",className:"pointer-events-none fixed inset-0 -z-10",children:e.jsx("div",{className:"absolute inset-0 mix-blend-screen bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.08)_0px,rgba(255,255,255,.08)_1px,transparent_1px,transparent_3px)]",style:{opacity:n}})});export{a as S};
