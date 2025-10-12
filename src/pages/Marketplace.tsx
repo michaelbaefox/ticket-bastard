@@ -431,16 +431,16 @@ export default function Marketplace() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-neo-contrast">
-              {listing.priceInSats.toLocaleString()}{' '}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="text-2xl font-bold text-neo-contrast break-words">
+              {listing.priceInSats.toLocaleString(undefined, { notation: 'compact' })}{' '}
               <span className="text-sm font-mono text-neo-contrast/60">sats</span>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => handleBuyTicket(listing)}
-                className="font-mono text-xs font-bold bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                className="font-mono text-xs font-bold bg-neo-contrast text-neo-contrast-inverse hover:bg-neo-contrast-inverse hover:text-neo-contrast shadow-neo-md hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] transition-all whitespace-normal break-words w-full sm:w-auto"
                 aria-label={`Buy ticket for ${listing.eventName}`}
                 aria-describedby={`listing-${listing.id}`}
               >
@@ -492,7 +492,7 @@ export default function Marketplace() {
               {listing.eventName}
             </Link>
             <div className="text-lg font-bold text-neo-contrast">
-              {listing.priceInSats.toLocaleString()}{' '}
+              {listing.priceInSats.toLocaleString(undefined, { notation: 'compact' })}{' '}
               <span className="text-xs font-mono text-neo-contrast/60">sats</span>
             </div>
           </div>
@@ -575,7 +575,7 @@ export default function Marketplace() {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Page Header */}
         <header className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold font-mono tracking-wider text-neo-contrast uppercase mb-6">MARKETPLACE</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-mono tracking-wider text-neo-contrast uppercase mb-6 break-words text-center lg:text-left">MARKETPLACE</h1>
         </header>
         
         {/* Toolbar */}
@@ -622,12 +622,12 @@ export default function Marketplace() {
               </Button>
 
               {/* View Toggle */}
-              <div className="flex border border-neo-border/25 rounded w-full sm:w-auto">
+              <div className="hidden md:flex border border-neo-border/25 rounded md:w-auto">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
-                  className={`font-mono text-xs font-bold rounded-none w-1/2 sm:w-auto ${
+                  className={`font-mono text-xs font-bold rounded-none w-1/2 md:w-auto ${
                     viewMode === 'grid'
                       ? 'bg-neo-contrast text-neo-contrast-inverse shadow-neo-md'
                       : 'bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse'
@@ -639,7 +639,7 @@ export default function Marketplace() {
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('list')}
-                  className={`font-mono text-xs font-bold rounded-none w-1/2 sm:w-auto ${
+                  className={`font-mono text-xs font-bold rounded-none w-1/2 md:w-auto ${
                     viewMode === 'list'
                       ? 'bg-neo-contrast text-neo-contrast-inverse shadow-neo-md'
                       : 'bg-transparent text-neo-contrast hover:bg-neo-contrast hover:text-neo-contrast-inverse'

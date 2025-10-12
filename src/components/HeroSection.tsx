@@ -114,7 +114,7 @@ export default function HeroSection() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col pt-24 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col pt-24 relative overflow-hidden px-4">
       <div className="min-h-screen flex flex-col">
 
       {/* Subtle CRT/VHS background */}
@@ -129,7 +129,7 @@ export default function HeroSection() {
       </div>
 
       {/* Hero – two column layout */}
-      <section className="flex-1 flex items-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <section className="flex-1 flex items-center px-0 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="w-full max-w-[1280px] mx-auto flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-20">
           {/* Left: logo */}
           <div className="w-full max-w-xs sm:max-w-sm lg:max-w-none lg:basis-5/12 relative flex justify-center">
@@ -139,38 +139,38 @@ export default function HeroSection() {
           {/* Right: info + CTAs */}
           <div className="w-full lg:basis-7/12 text-center lg:text-left">
             <div className="relative space-y-4">
-              <h1 className="text-[32px] sm:text-[36px] md:text-[40px] font-extrabold leading-tight tracking-[-0.02em]">
-                <span >F***</span> the system. Scan the{' '}
+              <h1 className="text-[26px] sm:text-[36px] md:text-[40px] font-extrabold leading-tight tracking-[-0.01em] text-pretty break-words">
+                <span>F***</span> the system. Scan the{' '}
                 <span className={heroGlitchWordClasses} data-text="bastard">
                   bastard
                 </span>
                 .
               </h1>
-              <p className="mx-auto lg:mx-0 text-base leading-relaxed text-neo-contrast/70 max-w-prose">
+              <p className="mx-auto lg:mx-0 text-base leading-relaxed text-neo-contrast/70 max-w-prose text-pretty">
                 Plain, portable, verifiable. No vendor lock‑in. No middlemen.
               </p>
 
-              <ul className="mt-5 space-y-3 text-sm sm:text-base text-neo-contrast/90">
-                <li className="flex items-start justify-center gap-3 lg:justify-start">
+              <ul className="mt-5 space-y-3 text-sm sm:text-base text-neo-contrast/90 text-pretty">
+                <li className="flex items-start justify-center gap-3 lg:justify-start text-pretty">
                   <span className="relative mt-[4px] grid h-3 w-3 place-items-center">
                     <span className="absolute inset-0 rounded-full bg-[rgba(255,133,197,0.35)] blur-[2px]" aria-hidden="true" />
                     <span className="relative mt-[0px] h-2 w-2 rounded-sm" style={{ backgroundColor: '#ff85c5' }} />
                   </span>
-                  <span className="flex-1 text-left">On‑chain outputs. No middlemen.</span>
+                  <span className="flex-1 text-left text-pretty">On‑chain outputs. Peer-to-peer.</span>
                 </li>
-                <li className="flex items-start justify-center gap-3 lg:justify-start">
+                <li className="flex items-start justify-center gap-3 lg:justify-start text-pretty">
                   <span className="relative mt-[4px] grid h-3 w-3 place-items-center">
                     <span className="absolute inset-0 rounded-full bg-neo-contrast/20 blur-[2px]" aria-hidden="true" />
                     <span className="relative mt-0 h-2 w-2 rounded-sm bg-neo-contrast/70" />
                   </span>
-                  <span className="flex-1 text-left">Encrypted seat. Your privacy.</span>
+                  <span className="flex-1 text-left text-pretty">Encrypted seat. Your privacy.</span>
                 </li>
-                <li className="flex items-start justify-center gap-3 lg:justify-start">
+                <li className="flex items-start justify-center gap-3 lg:justify-start text-pretty">
                   <span className="relative mt-[4px] grid h-3 w-3 place-items-center">
                     <span className="absolute inset-0 rounded-full bg-neo-contrast/20 blur-[2px]" aria-hidden="true" />
                     <span className="relative mt-0 h-2 w-2 rounded-sm bg-neo-contrast/70" />
                   </span>
-                  <span className="flex-1 text-left">Built‑in resale. No scalpers.</span>
+                  <span className="flex-1 text-left text-pretty">Built‑in resale. No scalpers.</span>
                 </li>
               </ul>
             </div>
@@ -179,7 +179,7 @@ export default function HeroSection() {
             <div className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:justify-start">
               <Link to="/tickets" className="w-full sm:w-auto">
                 <button
-                  className="relative isolate overflow-hidden w-full sm:w-auto h-[52px] sm:h-[56px] px-10 sm:px-12 text-sm sm:text-base font-black font-mono tracking-[0.2em] border border-neo-border bg-neo-contrast text-neo-contrast-inverse transition-none uppercase shadow-neo-lg hover:shadow-neo-md active:translate-x-[2px] active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-neo-contrast-inverse focus-visible:outline-none before:absolute before:inset-[-2px] before:bg-[conic-gradient(from_90deg_at_50%_50%,rgba(255,133,197,0.28),rgba(118,243,255,0.28),rgba(255,133,197,0.28))] before:opacity-0 before:transition before:duration-500 before:content-[''] hover:before:opacity-80"
+                  className="relative isolate overflow-hidden w-full sm:w-auto h-[48px] sm:h-[56px] px-6 sm:px-12 text-xs sm:text-base font-black font-mono tracking-[0.18em] sm:tracking-[0.2em] border border-neo-border bg-neo-contrast text-neo-contrast-inverse transition-none uppercase shadow-neo-lg hover:shadow-neo-md active:translate-x-[2px] active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-neo-contrast-inverse focus-visible:outline-none before:absolute before:inset-[-2px] before:bg-[conic-gradient(from_90deg_at_50%_50%,rgba(255,133,197,0.28),rgba(118,243,255,0.28),rgba(255,133,197,0.28))] before:opacity-0 before:transition before:duration-500 before:content-[''] hover:before:opacity-80"
                   onMouseEnter={handleCtaHover}
                   onFocus={handleCtaFocus}
                   aria-label="Get tickets"
@@ -189,7 +189,7 @@ export default function HeroSection() {
               </Link>
               <Link to="/marketplace" className="w-full sm:w-auto">
                 <button
-                  className="w-full sm:w-auto h-[52px] sm:h-[56px] px-8 sm:px-10 text-sm sm:text-base font-bold font-mono tracking-[0.2em] border border-neo-border bg-transparent text-neo-contrast transition-none uppercase shadow-neo-lg hover:shadow-neo-md hover:bg-neo-contrast hover:text-neo-contrast-inverse active:translate-x-[2px] active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-neo-contrast focus-visible:outline-none"
+                  className="w-full sm:w-auto h-[48px] sm:h-[56px] px-6 sm:px-10 text-xs sm:text-base font-bold font-mono tracking-[0.18em] sm:tracking-[0.2em] border border-neo-border bg-transparent text-neo-contrast transition-none uppercase shadow-neo-lg hover:shadow-neo-md hover:bg-neo-contrast hover:text-neo-contrast-inverse active:translate-x-[2px] active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-neo-contrast focus-visible:outline-none"
                   onMouseEnter={handleCtaHover}
                   onFocus={handleCtaFocus}
                   aria-label="Sell a ticket"
@@ -200,8 +200,11 @@ export default function HeroSection() {
             </div>
 
             {/* Sub-copy */}
-            <p className="mt-6 text-xs md:text-sm font-mono tracking-[0.02em] text-neo-contrast/60">"You don't own your tickets. Venues do. Until now."</p>
-            <p className="mt-2 text-[11px] font-mono uppercase tracking-[0.28em] text-neo-contrast/40" aria-hidden="true">
+            <p className="mt-6 text-xs md:text-sm font-mono tracking-[0.02em] text-neo-contrast/60 text-pretty">"You don't own your tickets. Venues do. Until now."</p>
+            <p
+              className="mt-2 text-[11px] font-mono uppercase tracking-[0.18em] sm:tracking-[0.28em] text-neo-contrast/40 text-pretty"
+              aria-hidden="true"
+            >
               {ctaPrimaryCaption}
             </p>
             <p
@@ -221,7 +224,7 @@ export default function HeroSection() {
         <p className="text-[11px] font-mono tracking-[0.45em] text-neo-contrast/60 mb-3">SYSTEM NOTICE</p>
         <div className="mx-auto max-w-2xl text-sm md:text-base leading-relaxed text-neo-contrast/70">
           <div className="relative overflow-hidden border border-neo-border/10 bg-black/20">
-            <div className="px-6 py-4 whitespace-nowrap will-change-transform animate-[systemMarquee_24s_linear_infinite]">
+            <div className="px-6 py-4 text-center text-pretty whitespace-normal sm:whitespace-nowrap will-change-transform sm:animate-[systemMarquee_24s_linear_infinite]">
               This website is not a joke. Unless you think it is. Then it's definitely a joke.
             </div>
           </div>
@@ -231,11 +234,11 @@ export default function HeroSection() {
       {/* Feature Strip */}
       <section className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-4 text-sm md:text-base text-neo-contrast/60">
+          <div className="flex flex-col items-center gap-3 text-center text-sm md:text-base text-neo-contrast/60 sm:flex-row sm:flex-wrap sm:justify-center sm:items-center sm:gap-x-4 sm:gap-y-4">
             <span>Blockchain-native</span>
-            <span className="text-neo-contrast/30 px-2">•</span>
+            <span className="hidden sm:inline text-neo-contrast/30 px-2">•</span>
             <span>End-to-end encrypted</span>
-            <span className="text-neo-contrast/30 px-2">•</span>
+            <span className="hidden sm:inline text-neo-contrast/30 px-2">•</span>
             <span>No platform fees</span>
           </div>
         </div>
