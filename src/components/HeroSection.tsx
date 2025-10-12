@@ -222,7 +222,7 @@ export default function HeroSection() {
         <div className="mx-auto max-w-2xl text-sm md:text-base leading-relaxed text-neo-contrast/70">
           <div className="relative overflow-hidden border border-neo-border/10 bg-black/20">
             <div className="px-6 py-4 whitespace-nowrap will-change-transform animate-[systemMarquee_24s_linear_infinite]">
-              This website is not a joke. Unless you think it is. Then it's definitely a joke. Either way: you need tickets.
+              This website is not a joke. Unless you think it is. Then it's definitely a joke.
             </div>
           </div>
         </div>
