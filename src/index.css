@@ -513,14 +513,22 @@ All colors MUST be HSL.
   }
 
   .logo-reveal__title {
-    left: -16%;
-    right: -4%;
+    left: 0;
+    right: 0;
     bottom: 82%;
     top: auto;
     opacity: 0;
-    transform: translateX(-28%);
+    transform: translateX(0);
     will-change: transform, opacity;
     z-index: 3;
+  }
+
+  @media (min-width: 768px) {
+    .logo-reveal__title {
+      left: -16%;
+      right: -4%;
+      transform: translateX(-20%);
+    }
   }
 
   .hand-stage--start .logo-reveal__hand--up {
