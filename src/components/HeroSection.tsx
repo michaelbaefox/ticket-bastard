@@ -200,13 +200,7 @@ export default function HeroSection() {
             </div>
 
             {/* Sub-copy */}
-            <p className="mt-6 text-xs md:text-sm font-mono tracking-[0.02em] text-neo-contrast/60 text-pretty">"You don't own your tickets. Venues do. Until now."</p>
-            <p
-              className="mt-2 text-[11px] font-mono uppercase tracking-[0.18em] sm:tracking-[0.28em] text-neo-contrast/40 text-pretty"
-              aria-hidden="true"
-            >
-              {ctaPrimaryCaption}
-            </p>
+           
             <p
               className="text-xs font-mono text-neo-contrast/40 mt-2 min-h-[18px]"
               role="status"
